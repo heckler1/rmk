@@ -3,7 +3,6 @@ use bt_hci::cmd::le::LeSetHostFeature;
 #[cfg(feature = "_ble")]
 use bt_hci::{cmd::le::LeRand, controller::ControllerCmdSync};
 use embassy_futures::select::{Either, select};
-#[cfg(not(feature = "_ble"))]
 use embedded_io_async::{Read, Write};
 use futures::FutureExt;
 #[cfg(all(feature = "_ble", feature = "storage"))]
@@ -31,7 +30,6 @@ use crate::event::{
 };
 #[cfg(feature = "display")]
 use crate::event::{ModifierEvent, WpmUpdateEvent};
-#[cfg(not(feature = "_ble"))]
 use crate::split::serial::SerialSplitDriver;
 use crate::state::update_status;
 
@@ -60,13 +58,7 @@ pub async fn run_rmk_split_peripheral<
     #[cfg(not(feature = "_ble"))] serial: S,
 ) {
     #[cfg(not(feature = "_ble"))]
-    {
-        let mut peripheral = SplitPeripheral::new(SerialSplitDriver::new(serial));
-
-        loop {
-            peripheral.run().await;
-        }
-    }
+    run_serial_split_peripheral(serial).await;
 
     #[cfg(feature = "_ble")]
     {
@@ -77,6 +69,16 @@ pub async fn run_rmk_split_peripheral<
             .set_random_address(Address::random(address))
             .build();
         crate::split::ble::peripheral::initialize_nrf_ble_split_peripheral_and_run(id, &stack).await;
+    }
+}
+
+/// Run the split peripheral over a serial port. A BLE build can use this too, for a board
+/// whose halves have a wired link as well.
+pub async fn run_serial_split_peripheral<S: Write + Read>(serial: S) {
+    let mut peripheral = SplitPeripheral::new(SerialSplitDriver::new(serial));
+
+    loop {
+        peripheral.run().await;
     }
 }
 

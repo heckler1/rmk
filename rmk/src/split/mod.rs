@@ -18,7 +18,6 @@ pub(crate) mod driver;
 pub mod peripheral;
 #[cfg(feature = "rp2040")]
 pub mod rp;
-#[cfg(not(feature = "_ble"))]
 pub mod serial;
 
 /// Maximum size of a split message

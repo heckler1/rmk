@@ -1,4 +1,3 @@
-#[cfg(not(feature = "_ble"))]
 use embedded_io_async::{Read, Write};
 
 #[cfg(feature = "dfu_split")]
@@ -8,8 +7,8 @@ pub use crate::split::dfu::UpdatePolicy;
 ///
 /// BLE split peripherals are managed inside the BLE transport — pass one
 /// [`PeripheralMatrixConfig`](crate::split::PeripheralMatrixConfig) per
-/// peripheral to `BleTransport::new`.
-#[cfg(not(feature = "_ble"))]
+/// peripheral to `BleTransport::new`. A BLE build can also run this, for a board whose
+/// halves have a wired link as well.
 pub async fn run_peripheral_manager<S: Read + Write>(
     id: usize,
     receiver: S,
@@ -24,4 +23,11 @@ pub async fn run_peripheral_manager<S: Read + Write>(
         policy,
     )
     .await;
+}
+
+/// Report whether peripheral `id` is reachable, for a transport that can tell.
+///
+/// RMK can't detect a wired peripheral going away, so it stays connected otherwise.
+pub fn set_peripheral_connected(id: usize, connected: bool) {
+    crate::split::driver::set_peripheral_connected(id, connected);
 }
