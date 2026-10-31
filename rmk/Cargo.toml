@@ -53,7 +53,8 @@ dongle = [
 ]
 
 ## Enable custom message support.
-custom_message = ["rmk-types/custom_message"]
+# A split central subscribes to the split messages and the custom messages on one link.
+custom_message = ["rmk-types/custom_message", "trouble-host?/gatt-client-notification-max-subscribers-2"]
 
 ## Enable the storage. The storage is optional to save memory
 storage = [
