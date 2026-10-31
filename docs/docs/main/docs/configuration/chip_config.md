@@ -2,6 +2,24 @@
 
 The `[chip.<chip_name>]` section allows you to configure chip-specific settings for different microcontrollers. These settings are optional and only needed when you want to override the default behavior.
 
+## nRF52 low-frequency clock
+
+By default, RMK runs the low-frequency clock from the internal RC oscillator and tells the BLE stack it is accurate to 500 ppm. If your board has a 32.768 kHz crystal, set `lfclk_xtal_ppm` to use it. The crystal needs no periodic calibration wakeups, and a smaller figure narrows the receive window the BLE peer has to keep open, so it can save power.
+
+This setting works under `[chip.<chip_name>]` for every nRF52 chip, for example `[chip.nrf52840]` or `[chip.nrf52832]`.
+
+```toml
+[chip.nrf52840]
+# Use the crystal, accurate to 150 ppm. Leave unset to use the internal RC oscillator.
+lfclk_xtal_ppm = 150
+```
+
+Set the value to the crystal's total accuracy, in the range 1 to 500. Include its tolerance, temperature drift and aging, as well as the accuracy of your load capacitors. If you don't know these, choose a value that's too high: too low a value can drop BLE connections, while too high a value only costs a little power.
+
+::: danger Hardware Requirement
+Only set `lfclk_xtal_ppm` if the board has a 32.768 kHz crystal fitted on the XL1 and XL2 pins, which are P0.00 and P0.01. RMK waits for the crystal without a timeout, so without one the firmware can stop during startup, before USB, BLE and the RMK watchdog have started. The board then looks dead and no key works, including a Bootloader key. To recover, enter the bootloader by a method that doesn't need the firmware, such as your board's reset button or a debug probe, and flash firmware without this setting.
+:::
+
 ## nRF52840
 
 ### DCDC Configuration

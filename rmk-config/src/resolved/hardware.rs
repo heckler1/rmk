@@ -116,6 +116,18 @@ impl crate::KeyboardTomlConfig {
     pub fn hardware(&self) -> Result<Hardware, String> {
         let chip = self.get_chip_model()?;
         let chip_config = self.get_chip_config();
+        if let Some(ppm) = chip_config.lfclk_xtal_ppm {
+            if chip.series != ChipSeries::Nrf52 {
+                return Err(format!(
+                    "lfclk_xtal_ppm is only supported on nRF52 chips, not {}",
+                    chip.chip
+                ));
+            }
+            // The Bluetooth sleep clock accuracy limit, MPSL_WORST_CLOCK_ACCURACY_PPM.
+            if !(1..=500).contains(&ppm) {
+                return Err(format!("lfclk_xtal_ppm must be between 1 and 500, got {ppm}"));
+            }
+        }
         let communication = self.get_communication_config()?;
         let board = self.get_board_config()?;
         board.validate_pointing_ids()?;
@@ -265,6 +277,60 @@ mod tests {
         let config = KeyboardTomlConfig::new_from_toml_path_with_event_defaults(&path);
         let _ = fs::remove_file(&path);
         config
+    }
+
+    fn lfclk_xtal_toml(chip: &str, ppm: u32) -> String {
+        format!(
+            r#"
+[keyboard]
+name = "test"
+product_name = "test"
+vendor_id = 0x4c4b
+product_id = 0x4643
+manufacturer = "RMK"
+chip = "{chip}"
+usb_enable = true
+
+[matrix]
+row_pins = ["P0_02"]
+col_pins = ["P0_03"]
+
+[layout]
+rows = 1
+cols = 1
+
+[chip.{chip}]
+lfclk_xtal_ppm = {ppm}
+"#
+        )
+    }
+
+    #[test]
+    fn lfclk_xtal_ppm_reaches_the_chip_config() {
+        let hardware = config_from_toml(&lfclk_xtal_toml("nrf52840", 500))
+            .hardware()
+            .unwrap_or_else(|e| panic!("{e}"));
+        assert_eq!(hardware.chip_config.lfclk_xtal_ppm, Some(500));
+    }
+
+    #[test]
+    fn lfclk_xtal_ppm_outside_the_bluetooth_range_is_rejected() {
+        for ppm in [0, 501] {
+            let err = config_from_toml(&lfclk_xtal_toml("nrf52840", ppm))
+                .hardware()
+                .err()
+                .unwrap();
+            assert!(err.contains("between 1 and 500"), "{err}");
+        }
+    }
+
+    #[test]
+    fn lfclk_xtal_ppm_is_rejected_off_nrf52() {
+        let err = config_from_toml(&lfclk_xtal_toml("rp2040", 150))
+            .hardware()
+            .err()
+            .unwrap();
+        assert!(err.contains("only supported on nRF52"), "{err}");
     }
 
     fn external_flash_toml(dfu_partition_size: Option<u32>) -> String {

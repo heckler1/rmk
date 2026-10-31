@@ -97,6 +97,31 @@ pub(crate) fn chip_init_default(hardware: &Hardware, peripheral_id: Option<usize
             } else {
                 quote! {}
             };
+            // embassy_nrf::init starts LFCLK for RTC1 and MPSL then shares it. When both name the same
+            // source MPSL keeps the running clock; otherwise it stops and restarts it under RTC1.
+            let (embassy_lfclk, mpsl_lfclk) = match chip_cfg.lfclk_xtal_ppm {
+                Some(ppm) => (
+                    quote! { config.lfclk_source = ::embassy_nrf::config::LfclkSource::ExternalXtal; },
+                    // mpsl_init returns an error unless both calibration intervals are 0 for a crystal.
+                    quote! {
+                        source: ::nrf_sdc::mpsl::raw::MPSL_CLOCK_LF_SRC_XTAL as u8,
+                        rc_ctiv: 0,
+                        rc_temp_ctiv: 0,
+                        accuracy_ppm: #ppm,
+                    },
+                ),
+                // nRF52 LFRC is +/-500 ppm after calibration (PS 5.4.4.4); the 250 ppm
+                // MPSL default understates it and narrows the receive window on the peer.
+                None => (
+                    quote! {},
+                    quote! {
+                        source: ::nrf_sdc::mpsl::raw::MPSL_CLOCK_LF_SRC_RC as u8,
+                        rc_ctiv: ::nrf_sdc::mpsl::raw::MPSL_RECOMMENDED_RC_CTIV as u8,
+                        rc_temp_ctiv: ::nrf_sdc::mpsl::raw::MPSL_RECOMMENDED_RC_TEMP_CTIV as u8,
+                        accuracy_ppm: 500,
+                    },
+                ),
+            };
             let ble_addr = get_ble_addr(hardware, peripheral_id);
             let central_links = if peripheral_id.is_some() { 0 } else { peri_num };
             let peripheral_links = if peripheral_id.is_some() {
@@ -109,12 +134,7 @@ pub(crate) fn chip_init_default(hardware: &Hardware, peripheral_id: Option<usize
                     // Initialize nrf-sdc and ble stack
                     let mpsl_p = ::nrf_sdc::mpsl::Peripherals::new(p.RTC0, p.TIMER0, p.TEMP, p.PPI_CH19, p.PPI_CH30, p.PPI_CH31);
                     let lfclk_cfg = ::nrf_sdc::mpsl::raw::mpsl_clock_lfclk_cfg_t {
-                        source: ::nrf_sdc::mpsl::raw::MPSL_CLOCK_LF_SRC_RC as u8,
-                        rc_ctiv: ::nrf_sdc::mpsl::raw::MPSL_RECOMMENDED_RC_CTIV as u8,
-                        rc_temp_ctiv: ::nrf_sdc::mpsl::raw::MPSL_RECOMMENDED_RC_TEMP_CTIV as u8,
-                        // nRF52 LFRC is +/-500 ppm after calibration (PS 5.4.4.4); the 250 ppm
-                        // MPSL default understates it and narrows the receive window on the peer.
-                        accuracy_ppm: 500,
+                        #mpsl_lfclk
                         skip_wait_lfclk_started: ::nrf_sdc::mpsl::raw::MPSL_DEFAULT_SKIP_WAIT_LFCLK_STARTED != 0,
                     };
                     static MPSL: ::static_cell::StaticCell<::nrf_sdc::mpsl::MultiprotocolServiceLayer> = ::static_cell::StaticCell::new();
@@ -141,6 +161,7 @@ pub(crate) fn chip_init_default(hardware: &Hardware, peripheral_id: Option<usize
                 use embassy_nrf::interrupt::InterruptExt;
                 let mut config = ::embassy_nrf::config::Config::default();
                 #dcdc_config
+                #embassy_lfclk
                 let p = ::embassy_nrf::init(config);
                 #ble_init
             }
@@ -367,5 +388,42 @@ cols = 1
     fn nrf52840_leaves_reg0_alone_when_unchanged() {
         let tokens = chip_init("nrf52840", "reg0-unchanged", r#"dcdc_reg0_voltage = "unchanged""#);
         assert!(!tokens.contains("Reg0Voltage"), "{tokens}");
+    }
+
+    #[test]
+    fn nrf52_keeps_the_rc_clock_unless_a_crystal_is_configured() {
+        let tokens = chip_init("nrf52840", "lfclk-unset", "");
+        let expected = quote! {
+            source: ::nrf_sdc::mpsl::raw::MPSL_CLOCK_LF_SRC_RC as u8,
+            rc_ctiv: ::nrf_sdc::mpsl::raw::MPSL_RECOMMENDED_RC_CTIV as u8,
+            rc_temp_ctiv: ::nrf_sdc::mpsl::raw::MPSL_RECOMMENDED_RC_TEMP_CTIV as u8,
+            accuracy_ppm: 500,
+            skip_wait_lfclk_started: ::nrf_sdc::mpsl::raw::MPSL_DEFAULT_SKIP_WAIT_LFCLK_STARTED != 0,
+        };
+        assert!(tokens.contains(&expected.to_string()), "{tokens}");
+        assert!(!tokens.contains("lfclk_source"), "{tokens}");
+        assert!(!tokens.contains("MPSL_CLOCK_LF_SRC_XTAL"), "{tokens}");
+    }
+
+    #[test]
+    fn nrf52_crystal_selects_it_for_embassy_and_mpsl() {
+        for chip in ["nrf52840", "nrf52833", "nrf52832"] {
+            let tokens = chip_init(chip, "lfclk-xtal", "lfclk_xtal_ppm = 150");
+            let embassy = quote! { config.lfclk_source = ::embassy_nrf::config::LfclkSource::ExternalXtal; };
+            let init = quote! { let p = ::embassy_nrf::init(config); };
+            let embassy_at = tokens.find(&embassy.to_string());
+            let init_at = tokens.find(&init.to_string());
+            assert!(embassy_at.is_some() && embassy_at < init_at, "{tokens}");
+
+            let ppm = 150u16;
+            let mpsl = quote! {
+                source: ::nrf_sdc::mpsl::raw::MPSL_CLOCK_LF_SRC_XTAL as u8,
+                rc_ctiv: 0,
+                rc_temp_ctiv: 0,
+                accuracy_ppm: #ppm,
+            };
+            assert!(tokens.contains(&mpsl.to_string()), "{tokens}");
+            assert!(!tokens.contains("MPSL_CLOCK_LF_SRC_RC"), "{tokens}");
+        }
     }
 }

@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `[chip.<nrf52 chip>] lfclk_xtal_ppm` runs the low-frequency clock from a 32.768 kHz crystal of the given accuracy instead of the internal RC oscillator.
 - `rmk::split::central::set_ble_split_enabled` pauses the BLE split scan and connect loop, for boards whose halves can also use a wired link. The BLE connection to the host isn't affected.
 - `battery_empty_mv` in `keyboard.toml` and `BatteryProcessor::with_empty_mv` set the voltage reported as 0%, so batteries used down to a lower voltage report a matching percentage. The default stays 3600 mV.
 - `[behavior.morse] preserve_key_order` queues later keys behind an undecided normal-mode morse key, matching ZMK's `tap-preferred` flavor.

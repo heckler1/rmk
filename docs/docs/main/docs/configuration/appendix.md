@@ -605,6 +605,10 @@ dcdc_reg1 = true
 # DCDC regulator 0 voltage (nrf52840 only, default: "3V3")
 # Valid values: "3V3" or "1V8"
 dcdc_reg0_voltage = "3V3"
+# Use a 32.768 kHz crystal of this accuracy in ppm, from 1 to 500 (nRF52 chips; default: unset, which
+# uses the internal RC oscillator at 500 ppm)
+# **Note**: Only set this if the board has a crystal, or it may stop during startup.
+lfclk_xtal_ppm = 150
 ```
 
 ### Available chip names

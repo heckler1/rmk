@@ -804,6 +804,9 @@ pub struct ChipConfig {
     pub dcdc_reg1: Option<bool>,
     /// DCDC regulator 0 voltage (for nrf52840)
     pub dcdc_reg0_voltage: Option<DcdcReg0Voltage>,
+    /// Run the low-frequency clock from a 32.768 kHz crystal of this accuracy in ppm (for nrf52).
+    /// Unset keeps the internal RC oscillator.
+    pub lfclk_xtal_ppm: Option<u16>,
 }
 
 /// Config for lights
