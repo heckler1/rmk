@@ -32,3 +32,14 @@ pub async fn run_peripheral_manager<S: Read + Write>(
 pub fn set_peripheral_connected(id: usize, connected: bool) {
     crate::split::driver::set_peripheral_connected(id, connected);
 }
+
+/// Stop or resume scanning and connecting for BLE split peripherals.
+///
+/// For a board whose peripherals can also use a wired link, so it doesn't spend
+/// power on a radio search nothing will answer. A scan or connect already running
+/// finishes first, within 30s, and resuming can take a second. Links to peripherals
+/// that are up stay up, and the BLE connection to the host isn't affected.
+#[cfg(feature = "_ble")]
+pub fn set_ble_split_enabled(enabled: bool) {
+    crate::split::ble::central::BLE_SPLIT_ENABLED.store(enabled, core::sync::atomic::Ordering::Release);
+}

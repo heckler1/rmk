@@ -1,3 +1,5 @@
+use core::sync::atomic::{AtomicBool, Ordering};
+
 #[cfg(feature = "subrating")]
 use bt_hci::cmd::le::LeSubrateRequest;
 use bt_hci::cmd::le::{LeReadLocalSupportedFeatures, LeSetPhy};
@@ -22,6 +24,10 @@ use crate::storage::{StorageItem, StorageKey, StorageValue, read, store_unchecke
 
 static PERIPHERAL_FOUND: Signal<crate::RawMutex, (u8, BdAddr)> = Signal::new();
 
+/// Cleared while the board reaches its peripherals another way, so
+/// [`scan_and_connect_peripherals`] leaves the radio alone.
+pub(crate) static BLE_SPLIT_ENABLED: AtomicBool = AtomicBool::new(true);
+
 /// One peripheral link's lifecycle, owned by [`scan_and_connect_peripherals`].
 enum SlotState {
     /// Unknown address: discover the peripheral by scanning.
@@ -30,6 +36,28 @@ enum SlotState {
     Disconnected([u8; 6]),
     /// The link is up and handed to the slot's session task.
     Connected([u8; 6]),
+}
+
+/// What [`scan_and_connect_peripherals`] does next.
+#[derive(Debug, PartialEq)]
+enum Step {
+    Connect,
+    Scan,
+    WaitForSessionEnd,
+    WaitUntilResumed,
+}
+
+fn next_step(slots: &[SlotState], sleeping: bool, enabled: bool) -> Step {
+    if enabled && slots.iter().any(|s| matches!(s, SlotState::Disconnected(_))) {
+        // If there're `Disconnected` peripherals, connect to them first.
+        Step::Connect
+    } else if slots.iter().all(|s| matches!(s, SlotState::Connected(_))) {
+        Step::WaitForSessionEnd
+    } else if sleeping || !enabled {
+        Step::WaitUntilResumed
+    } else {
+        Step::Scan
+    }
 }
 
 // The split service and its two characteristics, declared by `#[gatt_service]`
@@ -69,104 +97,110 @@ pub(crate) async fn scan_and_connect_peripherals<'a, C: Controller + CentralCmds
             }
         }
 
-        // Put every pending address in one accept list: the controller connects
-        // to whichever peripheral answers first, so an absent one doesn't block
-        // a present one for the whole timeout window.
-        let mut pending: heapless::Vec<(usize, [u8; 6]), { crate::SPLIT_PERIPHERALS_NUM }> = heapless::Vec::new();
-        for (id, slot) in peripheral_slots.iter().enumerate() {
-            if let SlotState::Disconnected(addr) = slot {
-                let _ = pending.push((id, *addr));
-            }
-        }
-        if !pending.is_empty() {
-            // If there're `Disconnected` peripherals, connect to them first.
-            let targets: heapless::Vec<Address, { crate::SPLIT_PERIPHERALS_NUM }> =
-                pending.iter().map(|(_, addr)| Address::random(*addr)).collect();
-            let config = ConnectConfig {
-                connect_params: default_split_conn_params(),
-                scan_config: ScanConfig {
-                    filter_accept_list: &targets,
-                    ..scan_config(SPLIT_CENTRAL_SCAN_WINDOW)
-                },
-            };
-            info!("Start connecting, {} peripheral(s) pending", pending.len());
-            let connected = match with_timeout(Duration::from_secs(15), connect(&mut central, &config)).await {
-                Ok(Ok(conn)) => {
-                    let peer = conn.peer_address();
-                    if let Some(&(id, addr)) = pending.iter().find(|(_, addr)| Address::random(*addr) == peer) {
-                        info!("Connected to peripheral {}", id);
-                        peripheral_slots[id] = SlotState::Connected(addr);
-                        conns[id].send(conn).await;
-                    } else {
-                        warn!("Connected peer {:?} matches no pending slot", peer.addr);
+        match next_step(
+            &peripheral_slots,
+            crate::state::current_sleep_state(),
+            BLE_SPLIT_ENABLED.load(Ordering::Acquire),
+        ) {
+            Step::Connect => {
+                // Put every pending address in one accept list: the controller connects
+                // to whichever peripheral answers first, so an absent one doesn't block
+                // a present one for the whole timeout window.
+                let mut pending: heapless::Vec<(usize, [u8; 6]), { crate::SPLIT_PERIPHERALS_NUM }> =
+                    heapless::Vec::new();
+                for (id, slot) in peripheral_slots.iter().enumerate() {
+                    if let SlotState::Disconnected(addr) = slot {
+                        let _ = pending.push((id, *addr));
                     }
-                    true
                 }
-                Ok(Err(e)) => {
-                    #[cfg(feature = "defmt")]
-                    let e = defmt::Debug2Format(&e);
-                    error!("Connect error: {:?}", e);
-                    Timer::after_millis(500).await;
-                    false
-                }
-                Err(_) => {
-                    // None answered.
-                    if crate::state::current_sleep_state() {
-                        warn!("Connect timeout while asleep, keeping {} address(es)", pending.len());
-                    } else {
-                        warn!("Connect timeout, clearing {} address(es)", pending.len());
-                        for &(id, _) in &pending {
-                            peripheral_slots[id] = SlotState::NoAddr;
+                let targets: heapless::Vec<Address, { crate::SPLIT_PERIPHERALS_NUM }> =
+                    pending.iter().map(|(_, addr)| Address::random(*addr)).collect();
+                let config = ConnectConfig {
+                    connect_params: default_split_conn_params(),
+                    scan_config: ScanConfig {
+                        filter_accept_list: &targets,
+                        ..scan_config(SPLIT_CENTRAL_SCAN_WINDOW)
+                    },
+                };
+                info!("Start connecting, {} peripheral(s) pending", pending.len());
+                let connected = match with_timeout(Duration::from_secs(15), connect(&mut central, &config)).await {
+                    Ok(Ok(conn)) => {
+                        let peer = conn.peer_address();
+                        if let Some(&(id, addr)) = pending.iter().find(|(_, addr)| Address::random(*addr) == peer) {
+                            info!("Connected to peripheral {}", id);
+                            peripheral_slots[id] = SlotState::Connected(addr);
+                            conns[id].send(conn).await;
+                        } else {
+                            warn!("Connected peer {:?} matches no pending slot", peer.addr);
                         }
+                        true
                     }
-                    false
+                    Ok(Err(e)) => {
+                        #[cfg(feature = "defmt")]
+                        let e = defmt::Debug2Format(&e);
+                        error!("Connect error: {:?}", e);
+                        Timer::after_millis(500).await;
+                        false
+                    }
+                    Err(_) => {
+                        // None answered.
+                        if radio_on_hold() {
+                            warn!("Connect timeout on hold, keeping {} address(es)", pending.len());
+                        } else {
+                            warn!("Connect timeout, clearing {} address(es)", pending.len());
+                            for &(id, _) in &pending {
+                                peripheral_slots[id] = SlotState::NoAddr;
+                            }
+                        }
+                        false
+                    }
+                };
+                // If connecting to the peripheral failed, and the radio is on hold,
+                // don't keep connecting, just wait.
+                if !connected {
+                    wait_until_resumed(ended).await;
                 }
-            };
-            // If connecting to the peripheral failed, and the central is sleeping,
-            // don't keep connecting, just wait.
-            if !connected {
-                wait_until_wakeup(ended).await;
             }
-        } else if peripheral_slots.iter().all(|s| matches!(s, SlotState::Connected(_))) {
-            // All peripherals are connected: wait until a session ends.
-            ended.ready_to_receive().await;
-        } else if crate::state::current_sleep_state() {
-            // There's empty peripheral slot, and the central is sleeping,
-            // don't scanning, just wait.
-            wait_until_wakeup(ended).await;
-        } else {
-            // Place the `NoAddr` peripherals by scanning for them.
-            info!("Start scanning peripherals");
-            let session = start_scan(stack, SPLIT_CENTRAL_SCAN_WINDOW, &[]).await;
-            let event = with_timeout(
-                Duration::from_secs(30),
-                select(PERIPHERAL_FOUND.wait(), ended.ready_to_receive()),
-            )
-            .await;
-            // Wait until the controller has confirmed the stop: it refuses an
-            // initiator until then.
-            session.stop().await;
-            info!("Stop scanning");
-            if let Ok(Either::First((id, addr))) = event {
-                // The id comes off the air — bounds-check it. Keep the first
-                // address seen for a slot; an occupied slot is cleared only
-                // when connecting to it times out.
-                match peripheral_slots.get_mut(id as usize) {
-                    Some(slot) if matches!(slot, SlotState::NoAddr) => {
-                        let addr = addr.into_inner();
-                        info!("Scanned new peripheral {:?}", addr);
-                        *slot = SlotState::Disconnected(addr);
-                        store_unchecked(StorageItem::PeerAddress(PeerAddress::new(id, true, addr))).await;
+            Step::WaitForSessionEnd => ended.ready_to_receive().await,
+            Step::WaitUntilResumed => wait_until_resumed(ended).await,
+            Step::Scan => {
+                // Place the `NoAddr` peripherals by scanning for them.
+                info!("Start scanning peripherals");
+                let session = start_scan(stack, SPLIT_CENTRAL_SCAN_WINDOW, &[]).await;
+                let event = with_timeout(
+                    Duration::from_secs(30),
+                    select(PERIPHERAL_FOUND.wait(), ended.ready_to_receive()),
+                )
+                .await;
+                // Wait until the controller has confirmed the stop: it refuses an
+                // initiator until then.
+                session.stop().await;
+                info!("Stop scanning");
+                if let Ok(Either::First((id, addr))) = event {
+                    // The id comes off the air — bounds-check it. Keep the first
+                    // address seen for a slot; an occupied slot is cleared only
+                    // when connecting to it times out.
+                    match peripheral_slots.get_mut(id as usize) {
+                        Some(slot) if matches!(slot, SlotState::NoAddr) => {
+                            let addr = addr.into_inner();
+                            info!("Scanned new peripheral {:?}", addr);
+                            *slot = SlotState::Disconnected(addr);
+                            store_unchecked(StorageItem::PeerAddress(PeerAddress::new(id, true, addr))).await;
+                        }
+                        _ => {}
                     }
-                    _ => {}
                 }
             }
         }
     }
 }
 
-async fn wait_until_wakeup(ended: &Channel<NoopRawMutex, usize, { crate::SPLIT_PERIPHERALS_NUM }>) {
-    while crate::state::current_sleep_state() {
+fn radio_on_hold() -> bool {
+    crate::state::current_sleep_state() || !BLE_SPLIT_ENABLED.load(Ordering::Acquire)
+}
+
+async fn wait_until_resumed(ended: &Channel<NoopRawMutex, usize, { crate::SPLIT_PERIPHERALS_NUM }>) {
+    while radio_on_hold() {
         if with_timeout(Duration::from_secs(1), ended.ready_to_receive())
             .await
             .is_ok()
@@ -649,14 +683,89 @@ async fn update_conn_params_on_sleep_change<
     }
 }
 
-#[cfg(all(test, feature = "ext_adv"))]
+#[cfg(test)]
 mod tests {
+    use core::sync::atomic::Ordering;
+
+    #[cfg(feature = "ext_adv")]
     use bt_hci::FromHciBytes;
+    #[cfg(feature = "ext_adv")]
     use bt_hci::param::{BdAddr, LeExtAdvReports};
+    use embassy_futures::join::join;
+    use embassy_sync::blocking_mutex::raw::NoopRawMutex;
+    use embassy_sync::channel::Channel;
+    use embassy_time::{Duration, Instant, Timer, with_timeout};
+    #[cfg(feature = "ext_adv")]
     use trouble_host::prelude::EventHandler;
 
+    use super::{BLE_SPLIT_ENABLED, SlotState, Step, next_step, wait_until_resumed};
+    #[cfg(feature = "ext_adv")]
     use super::{PERIPHERAL_FOUND, ScanHandler};
+    use crate::test_support::test_block_on as block_on;
 
+    const ADDR: [u8; 6] = [1, 2, 3, 4, 5, 0xC6];
+
+    #[test]
+    fn disabled_link_neither_connects_nor_scans() {
+        for slots in [
+            [SlotState::Disconnected(ADDR), SlotState::Connected(ADDR)],
+            [SlotState::NoAddr, SlotState::Connected(ADDR)],
+            [SlotState::Disconnected(ADDR), SlotState::NoAddr],
+        ] {
+            assert_eq!(next_step(&slots, false, false), Step::WaitUntilResumed);
+            assert_eq!(next_step(&slots, true, false), Step::WaitUntilResumed);
+        }
+    }
+
+    #[test]
+    fn disabled_link_with_all_sessions_up_waits_for_them_to_end() {
+        let slots = [SlotState::Connected(ADDR)];
+        assert_eq!(next_step(&slots, false, false), Step::WaitForSessionEnd);
+    }
+
+    #[test]
+    fn enabled_link_connects_then_scans() {
+        assert_eq!(
+            next_step(&[SlotState::Disconnected(ADDR), SlotState::NoAddr], false, true),
+            Step::Connect
+        );
+        assert_eq!(next_step(&[SlotState::NoAddr], false, true), Step::Scan);
+        assert_eq!(
+            next_step(&[SlotState::Connected(ADDR)], false, true),
+            Step::WaitForSessionEnd
+        );
+    }
+
+    #[test]
+    fn sleep_still_tries_a_known_address_but_never_scans() {
+        assert_eq!(next_step(&[SlotState::Disconnected(ADDR)], true, true), Step::Connect);
+        assert_eq!(next_step(&[SlotState::NoAddr], true, true), Step::WaitUntilResumed);
+    }
+
+    #[test]
+    fn resumes_once_the_link_is_enabled_again() {
+        let ended: Channel<NoopRawMutex, usize, { crate::SPLIT_PERIPHERALS_NUM }> = Channel::new();
+        BLE_SPLIT_ENABLED.store(false, Ordering::Release);
+        block_on(async {
+            let start = Instant::now();
+            let (held_for, ()) = join(
+                async {
+                    with_timeout(Duration::from_secs(10), wait_until_resumed(&ended))
+                        .await
+                        .expect("re-enabling the link should end the wait");
+                    start.elapsed()
+                },
+                async {
+                    Timer::after_millis(1500).await;
+                    BLE_SPLIT_ENABLED.store(true, Ordering::Release);
+                },
+            )
+            .await;
+            assert!(held_for >= Duration::from_millis(1500), "held while disabled");
+        });
+    }
+
+    #[cfg(feature = "ext_adv")]
     #[test]
     fn extended_reports_discover_only_split_peripherals() {
         for (data, expected_id) in [
