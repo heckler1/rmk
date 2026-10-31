@@ -1,6 +1,6 @@
 //! The abstracted driver layer of the split keyboard.
 //!
-use core::cell::Cell;
+use core::cell::{Cell, RefCell};
 
 use embassy_futures::select::{Either, select};
 use embassy_sync::blocking_mutex::Mutex as BlockingMutex;
@@ -57,6 +57,17 @@ static PERIPHERAL_SLOTS: BlockingMutex<crate::RawMutex, Cell<[PeripheralSlot; cr
         }; crate::SPLIT_PERIPHERALS_NUM],
     ));
 
+/// How many keys one peripheral can hold down at once.
+const MAX_HELD_KEYS: usize = 16;
+
+type HeldKeys = heapless::Vec<KeyboardEventSource, MAX_HELD_KEYS>;
+
+/// What each peripheral holds down, in the central's coordinates. It lives here
+/// rather than in `PeripheralManager` because a link can be reported lost from
+/// outside the manager, which also ends before the BLE path reports it.
+static HELD_KEYS: BlockingMutex<crate::RawMutex, RefCell<[HeldKeys; crate::SPLIT_PERIPHERALS_NUM]>> =
+    BlockingMutex::new(RefCell::new([const { HeldKeys::new() }; crate::SPLIT_PERIPHERALS_NUM]));
+
 /// Read-modify-write peripheral `id`'s slot. Returns `false` when `id` is out
 /// of range or the slot didn't change, so callers skip publishing.
 fn update_slot(id: usize, f: impl FnOnce(&mut PeripheralSlot)) -> bool {
@@ -76,9 +87,48 @@ fn update_slot(id: usize, f: impl FnOnce(&mut PeripheralSlot)) -> bool {
 }
 
 /// Latch peripheral `id`'s connected state and broadcast the change.
+///
+/// A lost link can't deliver the releases of what the peripheral holds, so they
+/// are synthesized here. That runs on every `false`, not just the transition, so
+/// a press read just after the link was reported lost is released by the next
+/// report from a transport that repeats them.
 pub(crate) fn set_peripheral_connected(id: usize, connected: bool) {
     if update_slot(id, |s| s.connected = connected) {
         publish_event(PeripheralConnectedEvent { id, connected });
+    }
+    if !connected {
+        let held = HELD_KEYS.lock(|held| held.borrow_mut().get_mut(id).map(core::mem::take));
+        for &source in held.iter().flatten() {
+            publish_event(KeyboardEvent { pressed: false, source });
+        }
+    }
+}
+
+/// Forward a key event from peripheral `id`, already in the central's coordinates.
+///
+/// Every press that reaches the keyboard is in `HELD_KEYS`, so a link loss can
+/// release it. That leaves two kinds of event to drop: a press past
+/// `MAX_HELD_KEYS`, and a release with no press, which is a key whose release
+/// was synthesized and that the peripheral let go of once the link came back.
+pub(crate) async fn forward_peripheral_key(id: usize, event: KeyboardEvent) {
+    let forward = HELD_KEYS.lock(|held| {
+        let mut held = held.borrow_mut();
+        let Some(keys) = held.get_mut(id) else {
+            return false;
+        };
+        match keys.iter().position(|source| *source == event.source) {
+            Some(_) if event.pressed => true,
+            Some(index) => {
+                keys.swap_remove(index);
+                true
+            }
+            None => event.pressed && keys.push(event.source).is_ok(),
+        }
+    });
+    if forward {
+        publish_event_async(event).await;
+    } else {
+        debug!("Dropping key event from peripheral {}: {:?}", id, event);
     }
 }
 
@@ -108,26 +158,6 @@ pub(crate) fn current_peripheral_status(id: usize) -> Option<PeripheralStatus> {
             battery: s.battery,
         })
     })
-}
-
-#[cfg(all(test, feature = "_ble"))]
-mod tests {
-    use rmk_types::battery::ChargeState;
-
-    use super::{current_peripheral_battery_status, set_peripheral_battery};
-
-    #[test]
-    fn caches_latest_peripheral_battery_status() {
-        let status = rmk_types::battery::BatteryStatus::Available {
-            charge_state: ChargeState::Discharging,
-            level: Some(73),
-        };
-
-        set_peripheral_battery(0, status);
-
-        assert_eq!(current_peripheral_battery_status(0), Some(status));
-        assert_eq!(current_peripheral_battery_status(crate::SPLIT_PERIPHERALS_NUM), None);
-    }
 }
 
 /// PeripheralManager runs on the central and manages communication with one split peripheral.
@@ -285,14 +315,17 @@ impl<T: SplitReader + SplitWriter> PeripheralManager<T> {
                         error!("Invalid peripheral row/col: {} {}", key_pos.row, key_pos.col);
                         return;
                     }
-                    publish_event_async(KeyboardEvent::key(
-                        key_pos.row + self.matrix_config.row_offset,
-                        key_pos.col + self.matrix_config.col_offset,
-                        e.pressed,
-                    ))
+                    forward_peripheral_key(
+                        self.id,
+                        KeyboardEvent::key(
+                            key_pos.row + self.matrix_config.row_offset,
+                            key_pos.col + self.matrix_config.col_offset,
+                            e.pressed,
+                        ),
+                    )
                     .await;
                 }
-                _ => publish_event_async(e).await,
+                _ => forward_peripheral_key(self.id, e).await,
             },
             // Non-key events are drop-on-full to keep the split read loop responsive.
             SplitMessage::Pointing(e) => publish_event(e),
@@ -312,5 +345,60 @@ impl<T: SplitReader + SplitWriter> PeripheralManager<T> {
             }
             _ => warn!("{:?} should not come from peripheral", split_message),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "_ble")]
+    use rmk_types::battery::ChargeState;
+
+    use super::{MAX_HELD_KEYS, forward_peripheral_key, set_peripheral_connected};
+    #[cfg(feature = "_ble")]
+    use super::{current_peripheral_battery_status, set_peripheral_battery};
+    use crate::event::{KeyboardEvent, SubscribableEvent};
+    use crate::test_support::test_block_on;
+
+    // Tracked and untracked presses must stay paired: an untracked one reaching
+    // the keyboard would stick, as its release is dropped.
+    #[test]
+    fn press_past_the_held_limit_is_dropped() {
+        test_block_on(async {
+            let mut sub = KeyboardEvent::subscriber();
+            for col in 0..=MAX_HELD_KEYS as u8 {
+                forward_peripheral_key(0, KeyboardEvent::key(0, col, true)).await;
+            }
+            for col in 0..MAX_HELD_KEYS as u8 {
+                assert_eq!(sub.next_message_pure().await, KeyboardEvent::key(0, col, true));
+            }
+            assert_eq!(sub.try_next_message_pure(), None);
+
+            set_peripheral_connected(0, false);
+            let mut released = 0;
+            while let Some(event) = sub.try_next_message_pure() {
+                assert!(!event.pressed);
+                released += 1;
+            }
+            assert_eq!(released, MAX_HELD_KEYS);
+        });
+    }
+
+    #[test]
+    fn link_loss_of_an_unknown_peripheral_is_ignored() {
+        set_peripheral_connected(crate::SPLIT_PERIPHERALS_NUM, false);
+    }
+
+    #[cfg(feature = "_ble")]
+    #[test]
+    fn caches_latest_peripheral_battery_status() {
+        let status = rmk_types::battery::BatteryStatus::Available {
+            charge_state: ChargeState::Discharging,
+            level: Some(73),
+        };
+
+        set_peripheral_battery(0, status);
+
+        assert_eq!(current_peripheral_battery_status(0), Some(status));
+        assert_eq!(current_peripheral_battery_status(crate::SPLIT_PERIPHERALS_NUM), None);
     }
 }

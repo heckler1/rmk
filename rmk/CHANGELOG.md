@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Keys held on a split peripheral are released when its link drops, over BLE or through `rmk::split::central::set_peripheral_connected`, instead of sticking on the central.
 - Caret taps preserve held keys and modifiers by executing through Keyboard.
 - Re-pairing a cleared BLE profile with the same host no longer leaves the profile marked as removed.
 - Apply processor registration conditions to both construction and execution.

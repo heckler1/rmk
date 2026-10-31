@@ -177,7 +177,7 @@ enum SimStep {
     ExpectNoHostReply(Duration),
     /// The internal event behind a topic push, already built as its publish
     /// future — so the harness needs no vocabulary of its own for event types.
-    #[cfg(feature = "rynk")]
+    #[cfg(any(feature = "rynk", feature = "split"))]
     Publish(Pin<Box<dyn Future<Output = ()>>>),
     #[cfg(feature = "passkey_entry")]
     BeginPasskeyEntry,
@@ -310,8 +310,8 @@ impl SimKeyboard {
     }
 
     /// Queue an internal event for the timeline to publish. Topic pushes whose
-    /// cause no matrix input reaches need this.
-    #[cfg(feature = "rynk")]
+    /// cause no matrix input reaches need this, as does input from a split link.
+    #[cfg(any(feature = "rynk", feature = "split"))]
     pub(crate) fn publish(&mut self, event: impl Future<Output = ()> + 'static) -> &mut Self {
         self.steps.push(SimStep::Publish(Box::pin(event)));
         self
@@ -503,7 +503,7 @@ async fn run_steps(steps: Vec<SimStep>, to_device: &Link, from_device: &Link) {
                     panic!("{at}: expected no host reply, got {n} byte(s): {}", hex(&reply[..n]));
                 }
             }
-            #[cfg(feature = "rynk")]
+            #[cfg(any(feature = "rynk", feature = "split"))]
             SimStep::Publish(event) => event.await,
             #[cfg(feature = "passkey_entry")]
             SimStep::BeginPasskeyEntry => rmk::ble::passkey::begin_passkey_entry_session(),

@@ -28,6 +28,7 @@ pub async fn run_peripheral_manager<S: Read + Write>(
 /// Report whether peripheral `id` is reachable, for a transport that can tell.
 ///
 /// RMK can't detect a wired peripheral going away, so it stays connected otherwise.
+/// Reporting `false` releases every key the peripheral holds, and can be repeated.
 pub fn set_peripheral_connected(id: usize, connected: bool) {
     crate::split::driver::set_peripheral_connected(id, connected);
 }

@@ -27,6 +27,13 @@ pub fn reset_connection_status() {
     crate::state::CONNECTION_STATUS.lock(|c| c.set(rmk_types::connection::ConnectionStatus::default()));
 }
 
+/// Deliver a key event as if it arrived from split peripheral `id`, which
+/// otherwise takes a whole transport.
+#[cfg(feature = "split")]
+pub async fn forward_peripheral_key(id: usize, event: crate::event::KeyboardEvent) {
+    crate::split::driver::forward_peripheral_key(id, event).await;
+}
+
 #[cfg(feature = "storage")]
 pub fn clear_flash_channel() {
     crate::storage::clear_flash_channel();
