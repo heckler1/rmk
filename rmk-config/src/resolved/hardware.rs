@@ -70,6 +70,8 @@ pub struct BatteryAdcConfig {
     pub pin: String,
     pub divider_measured: u32,
     pub divider_total: u32,
+    /// Voltage reported as 0%. `None` keeps the battery processor's default.
+    pub empty_mv: Option<u16>,
 }
 
 impl BatteryConfig {
@@ -96,6 +98,7 @@ impl BatteryConfig {
                 pin,
                 divider_measured,
                 divider_total,
+                empty_mv: config.battery_empty_mv,
             })
         } else {
             None

@@ -613,9 +613,40 @@ charge_led = {{ pin = "P0_21", low_active = false }}
 }
 
 #[test]
+fn battery_empty_voltage_resolves_with_the_adc_input() {
+    for (empty_field, expected) in [("", None), ("battery_empty_mv = 3450", Some(3450))] {
+        let path = write_temp_keyboard_toml(
+            "battery-empty-voltage",
+            &format!(
+                "{}\n[battery]\nbattery_adc_pin = \"vddh\"\n{empty_field}\n",
+                MINIMAL_KEYBOARD_TOML.replace("rp2040", "nrf52840")
+            ),
+        );
+        let hardware = KeyboardTomlConfig::new_from_toml_path(&path).hardware();
+        std::fs::remove_file(path).ok();
+        assert_eq!(hardware.unwrap().battery.adc.unwrap().empty_mv, expected);
+    }
+}
+
+#[test]
+fn battery_empty_voltage_at_or_above_full_charge_is_rejected() {
+    let path = write_temp_keyboard_toml(
+        "battery-empty-voltage-too-high",
+        &format!(
+            "{}\n[battery]\nbattery_adc_pin = \"vddh\"\nbattery_empty_mv = 4200\n",
+            MINIMAL_KEYBOARD_TOML.replace("rp2040", "nrf52840")
+        ),
+    );
+    let result = KeyboardTomlConfig::new_from_toml_path(&path).hardware();
+    std::fs::remove_file(path).ok();
+    assert!(result.err().unwrap().contains("battery_empty_mv must be below 4200"));
+}
+
+#[test]
 fn incomplete_or_ambiguous_battery_tables_are_rejected() {
     for table in [
         "adc_divider_total = 2",
+        "battery_empty_mv = 3450",
         "charge_led = { pin = \"PIN_5\", low_active = true }",
         "battery_adc_pin = \"vddh\"",
     ] {

@@ -16,7 +16,8 @@ pub(crate) fn expand_battery_devices(
         let constructor = if let Some(adc) = &config.adc {
             let measured = adc.divider_measured;
             let total = adc.divider_total;
-            quote! { ::rmk::input_device::battery::BatteryProcessor::new(#measured, #total) }
+            let empty_mv = adc.empty_mv.map(|mv| quote! { .with_empty_mv(#mv) });
+            quote! { ::rmk::input_device::battery::BatteryProcessor::new(#measured, #total) #empty_mv }
         } else {
             quote! { ::rmk::input_device::battery::BatteryProcessor::charging_only() }
         };
@@ -89,6 +90,7 @@ mod tests {
                         pin,
                         divider_measured: 1,
                         divider_total: 2,
+                        empty_mv: None,
                     }),
                     charge_state: state,
                     charge_led: led,
@@ -120,6 +122,7 @@ mod tests {
                     adc || charging
                 );
                 assert_eq!(init.to_string().contains("charging_only"), charging && !adc);
+                assert!(!init.to_string().contains("with_empty_mv"));
                 if charging {
                     assert!(init.to_string().contains("Pull :: Up"));
                 }
@@ -128,5 +131,25 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn configured_empty_voltage_reaches_the_battery_processor() {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../examples/use_config/nrf52840_ble/keyboard.toml");
+        let mut hardware = KeyboardTomlConfig::new_from_toml_path(&path)
+            .hardware()
+            .unwrap();
+        hardware.battery.adc = Some(rmk_config::resolved::hardware::BatteryAdcConfig {
+            pin: "P0_05".into(),
+            divider_measured: 1,
+            divider_total: 2,
+            empty_mv: Some(3450),
+        });
+        let (init, _, _) = expand_input_device_config(&hardware);
+        assert!(
+            init.to_string()
+                .contains("BatteryProcessor :: new (1u32 , 2u32) . with_empty_mv (3450u16)")
+        );
     }
 }

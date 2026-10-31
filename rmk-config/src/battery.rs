@@ -9,6 +9,7 @@ pub struct BatteryTomlConfig {
     pub battery_adc_pin: Option<String>,
     pub adc_divider_measured: Option<u32>,
     pub adc_divider_total: Option<u32>,
+    pub battery_empty_mv: Option<u16>,
     pub charge_state: Option<PinConfig>,
     pub charge_led: Option<PinConfig>,
     pub battery_user_description: Option<String>,
@@ -49,6 +50,12 @@ impl KeyboardTomlConfig {
             && (config.adc_divider_measured.is_some() || config.adc_divider_total.is_some())
         {
             return Err("battery: ADC divider requires battery_adc_pin in the same table".into());
+        }
+        if config.battery_empty_mv.is_some() && config.battery_adc_pin.is_none() {
+            return Err("battery_empty_mv requires battery_adc_pin in the same table".into());
+        }
+        if config.battery_empty_mv.is_some_and(|mv| mv >= 4200) {
+            return Err("battery_empty_mv must be below 4200".into());
         }
         if config.charge_led.is_some() && config.battery_adc_pin.is_none() && config.charge_state.is_none() {
             return Err("battery.charge_led requires battery_adc_pin or charge_state on the same board".into());

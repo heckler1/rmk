@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `battery_empty_mv` in `keyboard.toml` and `BatteryProcessor::with_empty_mv` set the voltage reported as 0%, so batteries used down to a lower voltage report a matching percentage. The default stays 3600 mV.
 - `[behavior.morse] preserve_key_order` queues later keys behind an undecided normal-mode morse key, matching ZMK's `tap-preferred` flavor.
 - `KeyboardEvent::keycode` executes a direct keycode without keymap, combo or fork lookup; `Virtual(u8)` remains a software keymap position.
 - Pointer acceleration in `PointingProcessor` for every pointing device: motion faster than a threshold is scaled up in proportion to its speed, up to a maximum, in cursor mode (`acceleration = { from, max }` in `keyboard.toml`) and scroll mode (`scroll_acceleration`). Off by default.

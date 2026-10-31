@@ -19,6 +19,10 @@ pub(crate) fn current_battery_status() -> BatteryStatus {
     BATTERY_STATUS.lock(|c| c.get())
 }
 
+/// Voltage of a fully charged LiPo cell, reported as 100%.
+const BATTERY_FULL_MV: u16 = 4200;
+const DEFAULT_BATTERY_EMPTY_MV: u16 = 3600;
+
 /// Reads charging state from a GPIO pin and publishes ChargingStateEvent.
 ///
 /// This input device monitors a charging state pin and publishes events when
@@ -69,6 +73,8 @@ impl<I: InputPin> ChargingStateReader<I> {
 #[processor(subscribe = [BatteryAdcEvent, ChargingStateEvent])]
 pub struct BatteryProcessor {
     adc_divider: Option<(u32, u32)>,
+    /// Battery voltage reported as 0%
+    empty_mv: u16,
     /// Current battery status
     battery_status: BatteryStatus,
 }
@@ -77,8 +83,24 @@ impl BatteryProcessor {
     pub fn new(adc_divider_measured: u32, adc_divider_total: u32) -> Self {
         BatteryProcessor {
             adc_divider: Some((adc_divider_measured, adc_divider_total)),
+            empty_mv: DEFAULT_BATTERY_EMPTY_MV,
             battery_status: BatteryStatus::Unavailable,
         }
+    }
+
+    /// Sets the voltage reported as 0%, in millivolts. The default is 3600.
+    /// The percentage scales linearly from here up to 4200 mV.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `empty_mv` is not below 4200.
+    pub fn with_empty_mv(mut self, empty_mv: u16) -> Self {
+        assert!(
+            empty_mv < BATTERY_FULL_MV,
+            "Battery empty voltage must be below 4200 mV"
+        );
+        self.empty_mv = empty_mv;
+        self
     }
 
     /// Reports charger state without measuring a battery percentage.
@@ -86,6 +108,7 @@ impl BatteryProcessor {
     pub fn charging_only() -> Self {
         Self {
             adc_divider: None,
+            empty_mv: DEFAULT_BATTERY_EMPTY_MV,
             battery_status: BatteryStatus::Unavailable,
         }
     }
@@ -106,7 +129,9 @@ impl BatteryProcessor {
             return Some(0);
         }
         let battery_mv = u64::from(val) * u64::from(divider_total) / u64::from(divider_measured);
-        Some((battery_mv.saturating_sub(3600) / 6).min(100) as u8)
+        let empty_mv = u64::from(self.empty_mv);
+        let range_mv = u64::from(BATTERY_FULL_MV) - empty_mv;
+        Some((battery_mv.saturating_sub(empty_mv) * 100 / range_mv).min(100) as u8)
     }
 
     async fn on_battery_adc_event(&mut self, event: BatteryAdcEvent) {
@@ -180,6 +205,30 @@ mod tests {
     #[test]
     fn zero_adc_divider_does_not_panic() {
         assert_eq!(BatteryProcessor::new(0, 1).get_battery_percent(2000), Some(0));
+    }
+
+    #[test]
+    fn default_battery_range_is_3600_to_4200_mv() {
+        let battery = BatteryProcessor::new(1, 1);
+        assert_eq!(battery.get_battery_percent(3600), Some(0));
+        assert_eq!(battery.get_battery_percent(3660), Some(10));
+        assert_eq!(battery.get_battery_percent(4200), Some(100));
+    }
+
+    #[test]
+    fn configured_empty_voltage_sets_the_bottom_of_the_range() {
+        let battery = BatteryProcessor::new(1, 1).with_empty_mv(3450);
+        assert_eq!(battery.get_battery_percent(3400), Some(0));
+        assert_eq!(battery.get_battery_percent(3450), Some(0));
+        assert_eq!(battery.get_battery_percent(3660), Some(28));
+        assert_eq!(battery.get_battery_percent(4200), Some(100));
+        assert_eq!(battery.get_battery_percent(4300), Some(100));
+    }
+
+    #[test]
+    #[should_panic(expected = "below 4200 mV")]
+    fn empty_voltage_at_full_charge_is_rejected() {
+        BatteryProcessor::new(1, 1).with_empty_mv(4200);
     }
 
     #[test]

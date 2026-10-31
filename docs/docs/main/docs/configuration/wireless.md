@@ -84,6 +84,7 @@ All three tables accept the same fields. Omit inputs and outputs that your board
 | `battery_adc_pin`          | ADC pin connected to the battery voltage divider, or `"vddh"` for the internal VDDH input on nRF52840/nRF52833.                                                         | No voltage measurement                                   |
 | `adc_divider_measured`     | Resistance between the ADC input and ground. Requires `battery_adc_pin`.                                                                                                | `1`                                                      |
 | `adc_divider_total`        | Total resistance of the voltage divider. Requires `battery_adc_pin`.                                                                                                    | `1`                                                      |
+| `battery_empty_mv`         | Battery voltage in millivolts reported as 0%. Must be below `4200`. Requires `battery_adc_pin`.                                                                         | `3600`                                                   |
 | `charge_state`             | Charging-status input as `{ pin, low_active }`. Set `low_active = true` if the charger drives the pin low while charging.                                               | No charging-status input                                 |
 | `charge_led`               | Indicator output as `{ pin, low_active }`. Set `low_active = true` if driving the pin low turns the LED on. Requires an ADC or charging-status input on the same board. | No indicator LED                                         |
 | `battery_user_description` | Battery name exposed over BLE. A peripheral requires `battery_adc_pin` to expose its battery service.                                                                   | `"Central"` or `"Peripheral N"`, where `N` starts at `0` |
@@ -93,6 +94,8 @@ For unibody keyboards, omitted fields use the board preset; an empty `[battery]`
 For split keyboards, an omitted side table uses the board preset. An explicit table replaces it entirely; an empty table disables that side's battery inputs.
 
 Set both divider values in the same units. For example, a divider with 806 kΩ between the battery and ADC input and 2 MΩ between the input and ground uses `2000` and `2806`. Both values must be greater than zero. With `battery_adc_pin = "vddh"`, RMK uses the internal 1:5 divider and ignores these two fields.
+
+RMK scales the battery percentage linearly from `battery_empty_mv` up to 4200 mV. Lower `battery_empty_mv` if your board keeps running below 3600 mV. For example, `battery_empty_mv = 3450` reports 28% at 3660 mV, where the default reports 10%. Set it in each battery table that needs it, because split boards do not share values. In Rust, call `BatteryProcessor::with_empty_mv` instead.
 
 On nRF52 chips with an ADC, RMK sets up voltage measurement automatically. The examples below use nRF52840 pins; replace them and the divider values to match your board.
 
