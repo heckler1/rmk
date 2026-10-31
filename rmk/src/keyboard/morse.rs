@@ -262,25 +262,38 @@ impl<'a> Keyboard<'a> {
     }
 
     pub(crate) async fn fire_held_non_morse_keys(&mut self) {
+        // A morse hold can start a macro, and `fire_macro` fires these once it ends.
+        if self.keymap.morse_preserve_key_order() && self.keymap.macros(|m| m.is_playing()) {
+            return;
+        }
+
         self.held_buffer.keys.sort_unstable_by_key(|k| k.press_time);
 
         // Trigger all non morse keys in the buffer
         while let Some(key) = self.held_buffer.remove_if(|k| !k.action.is_morse()) {
             debug!("Trigger non-morse key: {:?}", key);
-            let action = if key.event.source.is_physical() {
+            let released = matches!(key.state, KeyState::Released(_));
+            let action = if key.event.source.is_physical() && !released {
                 self.keymap.get_action_with_layer_cache(key.event)
             } else {
                 key.action
             };
             match action {
-                KeyAction::Single(action) => self.process_key_action_normal(action, key.event).await,
+                KeyAction::Single(action) => {
+                    self.process_key_action_normal(action, key.event).await;
+                    if released {
+                        let mut release = key.event;
+                        release.pressed = false;
+                        self.process_key_action_normal(action, release).await;
+                    }
+                }
                 KeyAction::Tap(action) => self.process_key_action_tap(action, key.event).await,
                 _ => (),
             }
         }
     }
 
-    fn has_unresolved_morse_key(&self) -> bool {
+    pub(crate) fn has_unresolved_morse_key(&self) -> bool {
         self.held_buffer.keys.iter().any(|k| {
             k.action.is_morse()
                 && matches!(

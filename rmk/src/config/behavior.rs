@@ -129,6 +129,8 @@ impl Default for TapConfig {
 #[derive(Clone, Debug)]
 pub struct MorsesConfig {
     pub enable_flow_tap: bool,
+    /// In normal mode, hold later non-morse keys back until the morse key resolves
+    pub preserve_key_order: bool,
     pub prior_idle_time: Duration, //used only when flow tap is enabled
     pub default_profile: MorseProfile,
 
@@ -144,6 +146,7 @@ impl Default for MorsesConfig {
     fn default() -> Self {
         Self {
             enable_flow_tap: false,
+            preserve_key_order: false,
             prior_idle_time: Duration::from_millis(120),
             default_profile: MorseProfile::new(Some(false), Some(MorseMode::Normal), Some(250u16), Some(250u16)),
             profiles: Vec::new(),

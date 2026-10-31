@@ -1,0 +1,73 @@
+# `preserve_key_order` queues keys pressed behind an undecided normal-mode morse
+# key, so a tap-hold typed first always reaches the host first.
+#
+# The fixture is the shared split board's home row: A@(1,0), MT(B, LShift)@(1,1),
+# MT(C, LGui)@(1,7), plain E@(1,4), with a 250 ms hold timeout.
+
+keyboard = "boards/split.toml"
+
+[behavior.morse]
+unilateral_tap = false
+preserve_key_order = true
+
+[[test]]
+name = "roll_keeps_press_order"
+steps = [
+  { press = [1, 1] },    # Press MT(B, LShift)
+  { press = [1, 0] },    # Press A, queued
+  { release = [1, 1] },  # Tap resolves, then A
+  { release = [1, 0] },
+]
+expect = [["B"], ["B", "A"], ["A"], []]
+
+[[test]]
+name = "key_tapped_inside_tap_hold_waits_for_it"
+steps = [
+  { press = [1, 1] },
+  { tap = { pos = [1, 0], duration = 10 } },  # Press and release both queued
+  { release = [1, 1] },
+]
+expect = [["B"], ["B", "A"], ["B"], []]
+
+[[test]]
+name = "queued_key_is_shifted_by_the_hold"
+steps = [
+  { press = [1, 1] },
+  { tap = { pos = [1, 0], duration = 10 } },
+  { delay = 260 },
+  { release = [1, 1] },
+]
+expect = [["LShift"], ["LShift", "A"], ["LShift"], []]
+
+[[test]]
+name = "queued_key_stays_behind_a_second_tap_hold"
+steps = [
+  { press = [1, 1] },    # Press MT(B, LShift)
+  { press = [1, 7] },    # Press MT(C, LGui)
+  { press = [1, 0] },    # Press A, queued behind both
+  { release = [1, 1] },
+  { release = [1, 7] },
+  { release = [1, 0] },
+]
+expect = [["B"], [], ["C"], ["A", "C"], ["A"], []]
+
+[[test]]
+name = "repeated_key_keeps_both_taps"
+steps = [
+  { press = [1, 1] },
+  { tap = { pos = [1, 0], duration = 10 } },
+  { delay = 10 },
+  { tap = { pos = [1, 0], duration = 10 } },
+  { release = [1, 1] },
+]
+expect = [["B"], ["B", "A"], ["B"], ["B", "A"], ["B"], []]
+
+[[test]]
+name = "disabled_lets_keys_through"
+behavior.morse = { preserve_key_order = false }
+steps = [
+  { press = [1, 1] },
+  { tap = { pos = [1, 0], duration = 10 } },
+  { release = [1, 1] },
+]
+expect = [["A"], [], ["B"], []]

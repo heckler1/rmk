@@ -447,6 +447,17 @@ impl<'a> Keyboard<'a> {
                     ));
                 }
             }
+            KeyBehaviorDecision::DeferRelease => {
+                debug!("Buffered key released behind an undecided morse key: {:?}", event);
+                if let Some(key) = self
+                    .held_buffer
+                    .keys
+                    .iter_mut()
+                    .find(|k| k.event.source == event.source && matches!(k.state, KeyState::Pressed(_)))
+                {
+                    key.state = KeyState::Released(MorsePattern::default());
+                }
+            }
             KeyBehaviorDecision::Ignore => {
                 debug!("Current key is ignored or not buffered, process normally: {:?}", event);
                 // Process current key normally
@@ -652,11 +663,16 @@ impl<'a> Keyboard<'a> {
                 }
                 HeldKeyDecision::Normal => {
                     // Check if the normal keys in the buffer should be triggered.
-                    let trigger_normal = matches!(decision_for_current_key, KeyBehaviorDecision::CleanBuffer);
+                    let trigger_normal = matches!(decision_for_current_key, KeyBehaviorDecision::CleanBuffer)
+                        && self
+                            .held_buffer
+                            .find_source(source)
+                            .is_some_and(|k| !self.is_behind_undecided_morse(k));
 
                     if trigger_normal && let Some(held_key) = self.held_buffer.remove_if(|k| k.event.source == source) {
                         debug!("Cleaning buffered normal key");
-                        let action = if keyboard_state_updated && held_key.event.source.is_physical() {
+                        let released = matches!(held_key.state, KeyState::Released(_));
+                        let action = if keyboard_state_updated && !released && held_key.event.source.is_physical() {
                             self.keymap.get_action_with_layer_cache(held_key.event)
                         } else {
                             held_key.action
@@ -667,6 +683,12 @@ impl<'a> Keyboard<'a> {
                         debug!("Tap Key {:?} now press down, action: {:?}", held_key.event, action);
                         self.process_key_action_inner(&action, held_key.event, held_key.press_time)
                             .await;
+                        if released {
+                            let mut release = held_key.event;
+                            release.pressed = false;
+                            self.process_key_action_inner(&action, release, held_key.press_time)
+                                .await;
+                        }
                     }
                 }
                 _ => (),
@@ -682,6 +704,19 @@ impl<'a> Keyboard<'a> {
         key.event.source.is_physical()
             && self.held_buffer.keys.iter().any(|k| {
                 k.press_time <= key.press_time && matches!(k.state, KeyState::ProcessedButReleaseNotReportedYet(_))
+            })
+    }
+
+    /// Whether `preserve_key_order` keeps `key` waiting for a normal-mode morse key
+    /// pressed before it. Morse keys are in `Pressed` until they resolve, and only
+    /// `Pressed` guarantees `press_time` still holds the press.
+    fn is_behind_undecided_morse(&self, key: &HeldKey) -> bool {
+        self.keymap.morse_preserve_key_order()
+            && self.held_buffer.keys.iter().any(|k| {
+                k.action.is_morse()
+                    && matches!(k.state, KeyState::Pressed(_))
+                    && k.press_time <= key.press_time
+                    && Self::tap_hold_mode(self.keymap, &k.action) == MorseMode::Normal
             })
     }
 
@@ -730,8 +765,14 @@ impl<'a> Keyboard<'a> {
                 .iter()
                 .filter(|k| matches!(k.state, KeyState::Pressed(_) | KeyState::Released(_)))
             {
+                let queued_release = !held_key.action.is_morse() && matches!(held_key.state, KeyState::Released(_));
+
                 // Releasing a key is already buffered
-                if !event.pressed && held_key.event.source == event.source {
+                if !event.pressed && held_key.event.source == event.source && !queued_release {
+                    if !held_key.action.is_morse() && self.is_behind_undecided_morse(held_key) {
+                        decision_for_current_key = KeyBehaviorDecision::DeferRelease;
+                        continue;
+                    }
                     debug!("Releasing a held key: {:?}", event);
                     let _ = decisions.push((held_key.event.source, HeldKeyDecision::Release));
                     decision_for_current_key = KeyBehaviorDecision::Release;
@@ -740,7 +781,7 @@ impl<'a> Keyboard<'a> {
 
                 // Buffered normal keys should be added to the decision list,
                 // they will be processed later according to the decision of current key
-                if !held_key.action.is_morse() && matches!(held_key.state, KeyState::Pressed(_)) {
+                if !held_key.action.is_morse() && (queued_release || matches!(held_key.state, KeyState::Pressed(_))) {
                     let _ = decisions.push((held_key.event.source, HeldKeyDecision::Normal));
                     continue;
                 }
@@ -796,6 +837,13 @@ impl<'a> Keyboard<'a> {
                                         decision_for_current_key = KeyBehaviorDecision::CleanBuffer;
                                         continue;
                                     }
+                                }
+                                if self.keymap.morse_preserve_key_order()
+                                    && !key_action.is_morse()
+                                    && event.source.is_physical()
+                                    && matches!(held_key.state, KeyState::Pressed(_))
+                                {
+                                    decision_for_current_key = KeyBehaviorDecision::Buffer;
                                 }
                             }
                         }
@@ -1742,7 +1790,11 @@ impl<'a> Keyboard<'a> {
         if self.macro_due > Instant::now() {
             return;
         }
+        let playing = self.keymap.macros(|m| m.is_playing());
         let Some(op) = self.keymap.macros(|m| m.next_op()) else {
+            if playing && self.keymap.morse_preserve_key_order() && !self.has_unresolved_morse_key() {
+                self.fire_held_non_morse_keys().await;
+            }
             return;
         };
         // Every op registers under the macro identity, never the trigger key's.
@@ -1947,6 +1999,8 @@ pub enum KeyBehaviorDecision {
     Ignore,
     // Release current key
     Release,
+    // Queue the release of a buffered key
+    DeferRelease,
     // Flow tap of current key is triggered
     FlowTap,
 }

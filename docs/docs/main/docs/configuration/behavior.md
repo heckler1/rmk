@@ -237,6 +237,7 @@ The `profile` of a morse key contains all tunable configurations of this morse k
 
 A profile contains the following fields:
 
+- `preserve_key_order`: _(global only)_ In `normal_mode`, holds back the press and release of later non-morse keys until an earlier morse or tap-hold key resolves, so keys reach the host in the order you pressed them. This matches ZMK's `tap-preferred` flavor. When disabled, those keys are sent immediately, ahead of the undecided key. Defaults to `false`.
 - `unilateral_tap`: (Experimental) Enables unilateral tap mode. When enabled, tap action will be triggered when a key from "same" hand is pressed. In current experimental version, the "same" hand is calculated using the `<hand>`, which can be given in `layout.map`. This option is recommended to set to true when `enable_flow_tap` is set to true. In `normal_mode` the tap resolves when the same-hand key is pressed; in `permissive_hold` mode, when it is released. `hold_on_other_press` mode ignores this option, because the hold fires on the other key's press first.
 
 - The morse mode, which can be set by enabling one of these:

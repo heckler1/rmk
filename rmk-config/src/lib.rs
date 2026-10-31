@@ -1044,6 +1044,8 @@ impl ForkTrigger {
 #[serde(deny_unknown_fields)]
 pub(crate) struct MorsesConfig {
     pub enable_flow_tap: Option<bool>, //default: false
+    /// In normal mode, hold later non-morse keys back until the morse key resolves
+    pub preserve_key_order: Option<bool>, //default: false
     /// used in permissive_hold mode
     pub prior_idle_time: Option<DurationMillis>,
 

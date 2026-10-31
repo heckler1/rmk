@@ -108,6 +108,9 @@ fn expand_morse(morse: &Option<Morse>) -> proc_macro2::TokenStream {
         let enable_flow_tap = config.enable_flow_tap;
         let enable_flow_tap_token = quote! { enable_flow_tap: #enable_flow_tap, };
 
+        let preserve_key_order = config.preserve_key_order;
+        let preserve_key_order_token = quote! { preserve_key_order: #preserve_key_order, };
+
         let prior_idle_time_ms = config.prior_idle_time_ms;
         let prior_idle_time_token =
             quote! { prior_idle_time: ::embassy_time::Duration::from_millis(#prior_idle_time_ms), };
@@ -147,6 +150,7 @@ fn expand_morse(morse: &Option<Morse>) -> proc_macro2::TokenStream {
         quote! {
             ::rmk::config::MorsesConfig {
                 #enable_flow_tap_token
+                #preserve_key_order_token
                 #prior_idle_time_token
                 default_profile: #default_profile,
                 #profiles_token

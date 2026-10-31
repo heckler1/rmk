@@ -84,6 +84,7 @@ pub struct Fork {
 
 pub struct Morse {
     pub enable_flow_tap: bool,
+    pub preserve_key_order: bool,
     pub prior_idle_time_ms: u64,
     pub default_profile: MorseProfile,
     pub profiles: HashMap<String, MorseProfile>,
@@ -228,6 +229,7 @@ impl crate::KeyboardTomlConfig {
 
             Morse {
                 enable_flow_tap: m.enable_flow_tap.unwrap_or(false),
+                preserve_key_order: m.preserve_key_order.unwrap_or(false),
                 prior_idle_time_ms: m.prior_idle_time.map(|t| t.0).unwrap_or(120),
                 default_profile,
                 profiles,

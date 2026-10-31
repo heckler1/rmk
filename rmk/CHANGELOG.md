@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `[behavior.morse] preserve_key_order` queues later keys behind an undecided normal-mode morse key, matching ZMK's `tap-preferred` flavor.
 - `KeyboardEvent::keycode` executes a direct keycode without keymap, combo or fork lookup; `Virtual(u8)` remains a software keymap position.
 - Pointer acceleration in `PointingProcessor` for every pointing device: motion faster than a threshold is scaled up in proportion to its speed, up to a maximum, in cursor mode (`acceleration = { from, max }` in `keyboard.toml`) and scroll mode (`scroll_acceleration`). Off by default.
 - Fractional cursor speed: `CursorConfig::divisor_x`/`divisor_y` divide cursor motion, carrying the remainder between motions, so a cursor slower than the sensor loses no movement and still accelerates.

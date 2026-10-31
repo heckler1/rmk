@@ -1,0 +1,30 @@
+# `preserve_key_order` with a morse hold that plays a macro: the queued keys wait
+# for the macro to finish, because its reports are sent after the hold resolves.
+#
+# The fixture has TH(A, Macro(0))@(0,0), where the macro taps shifted A, and plain
+# Space@(0,1) and Enter@(0,2).
+
+[layout]
+rows = 1
+cols = 3
+map = """
+(0,0,L)  (0,1,L)  (0,2,L)
+"""
+[behavior.morse]
+hold_timeout = "185ms"
+gap_timeout = "185ms"
+preserve_key_order = true
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(A, LShift)" }]
+[[keymap.layer]]
+keys = """
+TH(A, Macro(0))  Space  Enter
+"""
+[[test]]
+name = "queued_key_follows_macro_hold"
+steps = [{press=[0,0]},{delay=30},{tap={pos=[0,1],duration=30}},{delay=300},{release=[0,0]},{delay=100}]
+expect = [["LShift", "A"], [], ["Space"], []]
+[[test]]
+name = "two_queued_keys_follow_macro_hold"
+steps = [{press=[0,0]},{delay=30},{tap={pos=[0,1],duration=20}},{delay=10},{tap={pos=[0,2],duration=20}},{delay=300},{release=[0,0]},{delay=100}]
+expect = [["LShift", "A"], [], ["Space"], [], ["Enter"], []]

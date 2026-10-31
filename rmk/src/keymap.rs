@@ -701,6 +701,10 @@ impl<'a> KeyMap<'a> {
         self.inner.borrow().behavior.morse.enable_flow_tap
     }
 
+    pub(crate) fn morse_preserve_key_order(&self) -> bool {
+        self.inner.borrow().behavior.morse.preserve_key_order
+    }
+
     pub(crate) fn morse_prior_idle_time(&self) -> Duration {
         self.inner.borrow().behavior.morse.prior_idle_time
     }
