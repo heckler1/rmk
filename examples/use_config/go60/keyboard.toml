@@ -1,4 +1,4 @@
-# MoErgo Go60, translated from the default keymap in moergo-sc/zmk at 11454d2.
+# MoErgo Go60, translated from the "Moonlander AutoShift" ZMK keymap.
 # Pins, flash layout and matrix come from MoErgo's app/boards/arm/go60 in moergo-sc/zmk.
 
 [keyboard]
@@ -27,36 +27,24 @@ map = """
 [[keymap.layer]]
 name = "Base"
 keys = """
-Equal  Kc1  Kc2  Kc3  Kc4  Kc5  Kc6  Kc7  Kc8  Kc9  Kc0  Minus
-Tab  Q  W  E  R  T  Y  U  I  O  P  Backslash
-Escape  A  S  D  F  G  H  J  K  L  Semicolon  Quote
-TH(User21, MO(3), MAGIC)  Z  X  C  V  B  N  M  Comma  Dot  Slash  TD(0)
-Grave  Delete  Backspace  LGui  LeftBracket  RightBracket
-TD(1)  LShift  LCtrl  LAlt  Space  MT(Enter, RAlt, ENTER_ALT)
+Escape  TH(Kc1, Macro(0))  TH(Kc2, Macro(1))  TH(Kc3, Macro(2))  TH(Kc4, Macro(3))  TH(Kc5, Macro(4))  TH(Kc6, Macro(5))  TH(Kc7, Macro(6))  TH(Kc8, Macro(7))  TH(Kc9, Macro(8))  TH(Kc0, Macro(9))  Backspace
+Tab  TH(Q, Macro(10))  TH(W, Macro(11))  TH(E, Macro(12))  TH(R, Macro(13))  TH(T, Macro(14))  TH(Y, Macro(15))  TH(U, Macro(16))  TH(I, Macro(17))  TH(O, Macro(18))  TH(P, Macro(19))  TH(Equal, Macro(20))
+TD(0)  TH(A, Macro(21))  TH(S, Macro(22))  TH(D, Macro(23))  TH(F, Macro(24))  TH(G, Macro(25))  TH(H, Macro(26))  TH(J, Macro(27))  TH(K, Macro(28))  TH(L, Macro(29))  TH(Semicolon, Macro(30))  TH(Backslash, Macro(31))
+LShift  TH(Z, Macro(32))  TH(X, Macro(33))  TH(C, Macro(34))  TH(V, Macro(35))  TH(Grave, Macro(36))  TH(B, Macro(37))  TH(N, Macro(38))  TH(M, Macro(39))  TH(Comma, Macro(40))  TH(Dot, Macro(41))  No
+Left  Right  No  No  TH(LeftBracket, Macro(42))  TH(RightBracket, Macro(43))
+TD(0)  TH(User21, MO(2), MAGIC)  _  Backspace  TH(Enter, Macro(44))  Space
 User7
 """
 
 [[keymap.layer]]
-name = "Keypad"
+name = "Symbols"
 keys = """
-No  F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11
-_  No  Home  Up  End  PageUp  Kp7  Kp8  Kp9  KpMinus  KpSlash  F12
-_  WM(Y, LCtrl)  Left  Down  Right  PageDown  Kp4  Kp5  Kp6  KpPlus  KpAsterisk  NumLock
-TH(User21, MO(3), MAGIC)  WM(Z, LCtrl)  WM(X, LCtrl)  WM(C, LCtrl)  WM(V, LCtrl)  WM(V, LCtrl | LShift)  Kp1  Kp2  Kp3  KpEnter  Equal  TO(0)
-No  _  _  Kp0  KpDot  Backspace
-MO(2)  _  _  _  _  Kp0
-_
-"""
-
-[[keymap.layer]]
-name = "SymbolNav"
-keys = """
-Insert  F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11
-ScrollLock  WM(Kc1, LShift)  Home  Up  End  PageUp  WM(Kc9, LShift)  WM(Kc0, LShift)  Up  WM(Kc5, LShift)  Application  F12
-CapsLock  WM(Kc2, LShift)  Left  Down  Right  PageDown  WM(Kc4, LShift)  Left  Down  Right  Pause  PrintScreen
-TH(User21, MO(3), MAGIC)  WM(Kc3, LShift)  LeftBracket  RightBracket  WM(LeftBracket, LShift)  WM(RightBracket, LShift)  WM(Kc7, LShift)  WM(Kc8, LShift)  WM(Minus, LShift)  WM(Equal, LShift)  LShift  LCtrl
-WM(Kc6, LShift)  _  _  _  WM(Tab, LCtrl | LShift)  WM(Tab, LCtrl)
-TO(0)  _  _  _  _  _
+_  F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11
+_  TD(5)  WM(Left, LCtrl)  WM(Up, LCtrl)  WM(Right, LCtrl)  PageUp  WM(Quote, LShift)  Quote  _  _  _  F12
+_  TD(1)  TD(2)  TD(3)  TD(4)  PageDown  Slash  WM(Slash, LShift)  TD(3)  TD(2)  TD(1)  Home
+_  WM(Z, LGui)  WM(X, LGui)  WM(C, LGui)  WM(V, LGui)  WM(Grave, LShift)  WM(Minus, LShift)  Minus  _  _  Equal  End
+AudioVolDown  AudioVolUp  _  _  _  _
+MO(2)  _  _  MouseBtn1  _  Enter
 _
 """
 
@@ -64,24 +52,12 @@ _
 [[keymap.layer]]
 name = "Magic"
 keys = """
-User6  BrightnessDown  BrightnessUp  MediaPrevTrack  MediaNextTrack  MediaPlayPause  AudioMute  AudioVolDown  AudioVolUp  No  No  Macro(0)
-Bootloader  RgbSpi  RgbSai  RgbHui  RgbVai  RgbTog  No  No  No  No  No  No
-Reboot  RgbSpd  RgbSad  RgbHud  RgbVad  RgbModeForward  No  No  No  No  No  No
-No  No  User0  User1  User2  User3  No  No  No  No  No  TO(4)
+User6  BrightnessDown  BrightnessUp  MediaPrevTrack  MediaNextTrack  MediaPlayPause  AudioMute  AudioVolDown  AudioVolUp  No  No  Macro(45)
+Bootloader  RgbSpi  RgbSai  RgbHui  RgbVai  RgbTog  No  No  Up  No  No  No
+Reboot  RgbSpd  RgbSad  RgbHud  RgbVad  RgbModeForward  No  Left  Down  Right  No  No
+No  No  User0  User1  User2  User3  No  No  No  No  No  TO(0)
 User20  No  No  No  No  No
 No  No  No  No  No  No
-_
-"""
-
-[[keymap.layer]]
-name = "Factory"
-keys = """
-Kc0  Kc4  Kc8  Kc3  Kc8  Kc3  Kc3  Kc8  Kc3  Kc8  Kc4  Kc0
-Kc1  Kc5  Kc9  Kc4  Kc9  Kc4  Kc4  Kc9  Kc4  Kc9  Kc5  Kc1
-Kc2  Kc6  Kc0  Kc5  Kc0  Kc5  Kc5  Kc0  Kc5  Kc0  Kc6  Kc2
-Kc3  Kc7  Kc1  Kc6  Kc1  Kc6  Kc6  Kc1  Kc6  Kc1  Kc7  Kc3
-Kc2  Kc7  Kc2  Kc2  Kc7  Kc2
-Kc7  Kc8  Kc9  Kc9  Kc8  Kc7
 _
 """
 
@@ -113,52 +89,219 @@ lfclk_xtal_ppm = 150
 
 [rmk]
 ble_profiles_num = 4
-macro_max_num = 1
+macro_space_size = 512
+macro_max_num = 46
 custom_message_max_size = 8
-morse_max_num = 2
+morse_max_num = 6
 # Matches ZMK's 120s idle timeout on the Go60. RMK defaults to never sleeping.
 split_central_sleep_timeout_seconds = 120
 
 # Extra subscribers: src/go60_keys.rs and src/underglow.rs read keymap actions, and
 # src/right_keys.rs reads the active layer. src/underglow.rs also reads battery,
-# connection, layer, lock, and sleep state, src/cirque.rs reads layer and sleep state,
-# and src/trackpad_speed.rs reads the active layer.
+# connection, layer, lock, and sleep state, and src/cirque.rs reads layer and sleep state.
 [event]
 action.subs = 2
-layer_change.subs = 5
+layer_change.subs = 4
 led_indicator.subs = 4
 battery_status.subs = 1
 connection_status_change.subs = 2
 sleep_state.subs = 2
 
-# ZMK's tap-preferred hold-tap is RMK's normal mode with preserve_key_order, which
-# queues later keys until the hold-tap resolves.
+[behavior.one_shot]
+timeout = "1s"
+
+# ZMK's &sk sends the modifier on press and holds it until the next key's release.
+[behavior.one_shot_modifiers]
+activate_on_keypress = true
+quick_release = false
+
+# Default profile: autoshift. ZMK's tap-preferred hold-tap is RMK's normal mode with
+# preserve_key_order, which queues later keys until the hold-tap resolves.
 [behavior.morse]
-hold_timeout = "200ms"
-gap_timeout = "200ms"
+hold_timeout = "185ms"
+gap_timeout = "185ms"
 preserve_key_order = true
 
 [behavior.morse.profiles]
-# ZMK tap dances: pressing another key resolves them at once.
+# ZMK tap dances: a 200ms term, and pressing another key resolves them at once.
 TAP_DANCE = { hold_on_other_press = true, hold_timeout = "200ms", gap_timeout = "200ms" }
 # ZMK's `magic` hold-tap: tap for status LEDs, hold for the Magic layer.
 MAGIC = { hold_timeout = "200ms" }
-# ZMK's &mt is hold-preferred.
-ENTER_ALT = { hold_on_other_press = true, hold_timeout = "200ms" }
 
-# TD(0): hold for Keypad, double-tap to stay on it
+# TD(0): hold for Symbols, double-tap to stay on it
 [[behavior.morse.morses]]
 hold = "MO(1)"
 double_tap = "TO(1)"
 profile = "TAP_DANCE"
 
-# TD(1): hold for SymbolNav, double-tap to stay on it
+# TD(1..4): one-shot modifier, double-tap to latch it for 10s
 [[behavior.morse.morses]]
-hold = "MO(2)"
-double_tap = "TO(2)"
+tap = "OSM(LCtrl)"
+hold = "OSM(LCtrl)"
+double_tap = "User16"
 profile = "TAP_DANCE"
 
-# Macro 0: clear every BLE profile (ZMK's BT_CLR_ALL), ending on profile 0.
+[[behavior.morse.morses]]
+tap = "OSM(LAlt)"
+hold = "OSM(LAlt)"
+double_tap = "User17"
+profile = "TAP_DANCE"
+
+[[behavior.morse.morses]]
+tap = "OSM(LGui)"
+hold = "OSM(LGui)"
+double_tap = "User18"
+profile = "TAP_DANCE"
+
+[[behavior.morse.morses]]
+tap = "OSM(LShift)"
+hold = "OSM(LShift)"
+double_tap = "User19"
+profile = "TAP_DANCE"
+
+# TD(5): double-tap to lock macOS
+[[behavior.morse.morses]]
+double_tap = "WM(Q, LGui | LCtrl)"
+profile = "TAP_DANCE"
+
+# Macros 0-44: an autoshift hold. It taps the shifted key once instead of holding it,
+# so holding a key doesn't auto-repeat, the same as ZMK.
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Kc1, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Kc2, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Kc3, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Kc4, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Kc5, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Kc6, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Kc7, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Kc8, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Kc9, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Kc0, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Q, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(W, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(E, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(R, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(T, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Y, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(U, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(I, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(O, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(P, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Equal, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(A, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(S, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(D, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(F, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(G, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(H, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(J, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(K, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(L, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Semicolon, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Backslash, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Z, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(X, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(C, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(V, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Grave, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(B, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(N, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(M, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Comma, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Dot, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(LeftBracket, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(RightBracket, LShift)" }]
+
+[[behavior.macro.macros]]
+operations = [{ operation = "tap", keycode = "WM(Enter, LShift)" }]
+
+# Macro 45: clear every BLE profile (ZMK's BT_CLR_ALL), ending on profile 0.
 [[behavior.macro.macros]]
 operations = [
   { operation = "tap", keycode = "User3" },

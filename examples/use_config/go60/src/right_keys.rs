@@ -9,7 +9,7 @@ use rmk::boot::jump_to_bootloader;
 use rmk::event::{KeyboardEvent, KeyboardEventSource, KeyPos, LayerChangeEvent};
 use rmk::macros::processor;
 
-const MAGIC_LAYER: u8 = 3;
+const MAGIC_LAYER: u8 = 2;
 /// Columns are local to this half: its outer column is 6.
 const BOOTLOADER_KEY: KeyPos = KeyPos { row: 1, col: 6 };
 const RESET_KEY: KeyPos = KeyPos { row: 2, col: 6 };

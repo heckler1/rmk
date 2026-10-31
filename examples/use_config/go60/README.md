@@ -1,6 +1,6 @@
 # MoErgo Go60
 
-RMK firmware for the MoErgo Go60, using the default keymap from [MoErgo's ZMK fork](https://github.com/moergo-sc/zmk).
+RMK firmware for the MoErgo Go60, translated from a ZMK "Moonlander AutoShift" keymap.
 
 This firmware intentionally differs from MoErgo's ZMK in two ways:
 
@@ -29,7 +29,7 @@ This writes `go60_lh.uf2` and `go60_rh.uf2`. Use these files, not the output of 
 2. Put the right half in bootloader mode and copy `go60_rh.uf2` to its drive.
 3. Remove the old Go60 entry from your computer's Bluetooth settings and pair again.
 
-On this firmware, the Bootloader key is the outer key on the second row of the Magic layer, on each half. The Magic layer is on the Magic key, the outer key on the bottom row of the left half.
+On this firmware, the Bootloader key is the outer key on the second row of the Magic layer, on each half. The Magic layer is on the second left thumb key.
 
 ## Go back to ZMK
 

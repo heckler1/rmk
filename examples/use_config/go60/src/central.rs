@@ -3,7 +3,6 @@
 
 mod cirque;
 mod go60_keys;
-mod trackpad_speed;
 mod underglow;
 mod wired;
 
@@ -28,28 +27,21 @@ mod keyboard_central {
     }
 
     #[register_processor]
-    fn trackpad_speed() -> crate::trackpad_speed::TrackpadSpeed {
-        crate::trackpad_speed::TrackpadSpeed::new()
-    }
-
-    #[register_processor]
     fn pointing() -> ::rmk::input_device::pointing::PointingProcessor<'_> {
         use ::rmk::input_device::pointing::{PointingProcessor, PointingProcessorConfig, ScrollAxis, ScrollConfig};
 
-        // ZMK's `zip_xy_scaler 1 8` on the left pad. ZMK's wheel rises for +Y, RMK's falls.
-        let pan = ScrollAxis {
+        // ZMK's `zip_xy_scaler 1 5` on the left pad. RMK's wheel already falls for +Y,
+        // which is what ZMK's INPUT_TRANSFORM_Y_INVERT does before the scroll mapper.
+        let axis = ScrollAxis {
             multiplier: 1,
-            divisor: 8,
+            divisor: 5,
             invert: false,
         };
-        let wheel = ScrollAxis { invert: true, ..pan };
         let config = PointingProcessorConfig {
-            device_scroll: ScrollConfig { wheel, pan },
+            device_scroll: ScrollConfig { wheel: axis, pan: axis },
             ..Default::default()
         };
-        let mut processor = PointingProcessor::new(&keymap, config);
-        processor.set_pointing_mode(crate::trackpad_speed::default_mode());
-        processor
+        PointingProcessor::new(&keymap, config)
     }
 
     #[register_processor]
@@ -88,8 +80,7 @@ mod keyboard_central {
                 device_id: 0,
                 axes: (Axis::H, Axis::V),
                 buttons: [HidKeyCode::MouseBtn2, HidKeyCode::MouseBtn2, HidKeyCode::MouseBtn3],
-                // Factory, as `layer_4` on `cirque_lh_listener` in MoErgo's default keymap.
-                cursor_layer: Some(4),
+                cursor_layer: None,
             },
         )
     }
