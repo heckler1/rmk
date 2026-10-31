@@ -1,0 +1,35 @@
+# `cargo make uf2 --release` writes go60_lh.hex and go60_rh.hex, plus UF2 files tagged
+# with a generic nRF52840 family. package.sh retags those for the Go60 bootloader.
+
+[tasks.install-llvm-tools]
+install_crate = { rustup_component_name = "llvm-tools" }
+
+[tasks.flip-link]
+install_crate = { crate_name = "flip-link", binary = "flip-link", test_arg = ["-h"] }
+
+[tasks.objcopy-lh]
+install_crate = { crate_name = "cargo-binutils", binary = "cargo", test_arg = ["objcopy", "--help"] }
+command = "cargo"
+args = ["objcopy", "--release", "--bin", "go60_lh", "--", "-O", "ihex", "go60_lh.hex"]
+dependencies = ["install-llvm-tools", "flip-link"]
+
+[tasks.objcopy-rh]
+install_crate = { crate_name = "cargo-binutils", binary = "cargo", test_arg = ["objcopy", "--help"] }
+command = "cargo"
+args = ["objcopy", "--release", "--bin", "go60_rh", "--", "-O", "ihex", "go60_rh.hex"]
+dependencies = ["install-llvm-tools", "flip-link"]
+
+[tasks.uf2-lh]
+install_crate = { crate_name = "cargo-hex-to-uf2", binary = "cargo", test_arg = ["hex-to-uf2", "--help"] }
+command = "cargo"
+args = ["hex-to-uf2", "--input-path", "go60_lh.hex", "--output-path", "go60_lh.uf2", "--family", "nrf52840"]
+dependencies = ["objcopy-lh"]
+
+[tasks.uf2-rh]
+install_crate = { crate_name = "cargo-hex-to-uf2", binary = "cargo", test_arg = ["hex-to-uf2", "--help"] }
+command = "cargo"
+args = ["hex-to-uf2", "--input-path", "go60_rh.hex", "--output-path", "go60_rh.uf2", "--family", "nrf52840"]
+dependencies = ["objcopy-rh"]
+
+[tasks.uf2]
+dependencies = ["uf2-lh", "uf2-rh"]

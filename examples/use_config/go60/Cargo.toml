@@ -1,0 +1,75 @@
+[package]
+name = "rmk-go60"
+version = "0.2.0"
+authors = ["Haobo Gu <haobogu@outlook.com>"]
+description = "Keyboard firmware written in Rust"
+homepage = "https://github.com/rmk-rs/rmk"
+repository = "https://github.com/rmk-rs/rmk"
+readme = "../../README.md"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "go60_lh"
+path = "src/central.rs"
+
+[[bin]]
+name = "go60_rh"
+path = "src/peripheral.rs"
+
+[dependencies]
+rmk = { path = "../../../rmk", default-features = false, features = ["defmt", "storage", "watchdog", "nrf52840_ble", "ext_adv", "split", "async_matrix", "adafruit_bl", "subrating", "custom_message"] }
+
+embassy-executor = { version = "0.10", features = [
+    "defmt",
+    "platform-cortex-m",
+    "executor-thread",
+] }
+embassy-nrf = { version = "0.11", features = [
+    "defmt",
+    "nrf52840",
+    "time-driver-rtc1",
+    "gpiote",
+    "unstable-pac",
+    "time",
+] }
+embassy-time = { version = "0.5", features = ["tick-hz-32_768", "defmt", "defmt-timestamp-uptime"] }
+nrf-mpsl = { git = "https://github.com/alexmoon/nrf-sdc", rev = "9cf87fa7883b89b2d4dc7cd94864da7927bd858c", features = [
+    "defmt",
+    "critical-section-impl",
+    "nrf52840",
+] }
+nrf-sdc = { git = "https://github.com/alexmoon/nrf-sdc", rev = "9cf87fa7883b89b2d4dc7cd94864da7927bd858c", features = [
+    "defmt",
+    "peripheral",
+    "central",
+    "nrf52840",
+] }
+
+bt-hci = { version = "0.11", features = ["defmt"] }
+cortex-m = "0.7.7"
+# The bootloader leaves VTOR on the MBR; point it straight at this image, as Zephyr does.
+cortex-m-rt = { version = "0.7.5", features = ["set-vtor"] }
+defmt = "1"
+defmt-rtt = "1"
+panic-probe = { version = "1", features = ["print-defmt"] }
+static_cell = "2"
+embassy-futures = "0.1"
+embassy-sync = "0.8"
+embedded-io-async = "0.7"
+
+
+[profile.dev]
+codegen-units = 1      # better optimizations
+debug = true
+opt-level = 1
+overflow-checks = true
+lto = false
+panic = 'unwind'
+
+[profile.release]
+codegen-units = 1       # better optimizations
+debug = true            # no overhead for bare-metal
+opt-level = "z"         # optimize for binary size
+overflow-checks = false
+lto = "fat"

@@ -1,0 +1,215 @@
+# MoErgo Go60, translated from the default keymap in moergo-sc/zmk at 11454d2.
+# Pins, flash layout and matrix come from MoErgo's app/boards/arm/go60 in moergo-sc/zmk.
+
+[keyboard]
+name = "Go60"
+product_name = "Go60"
+vendor_id = 0x16c0
+product_id = 0x27db
+manufacturer = "MoErgo"
+chip = "nrf52840"
+
+# (4,0) has no physical key. It holds the output toggle, which src/go60_keys.rs
+# presses only when the output has to change, and sits last in every layer.
+[layout]
+rows = 5
+cols = 14
+map = """
+(0,0)  (0,1)  (0,2)  (0,3)  (0,4)  (0,5)  (0,8)  (0,9)  (0,10)  (0,11)  (0,12)  (0,13)
+(1,0)  (1,1)  (1,2)  (1,3)  (1,4)  (1,5)  (1,8)  (1,9)  (1,10)  (1,11)  (1,12)  (1,13)
+(2,0)  (2,1)  (2,2)  (2,3)  (2,4)  (2,5)  (2,8)  (2,9)  (2,10)  (2,11)  (2,12)  (2,13)
+(3,0)  (3,1)  (3,2)  (3,3)  (3,4)  (3,5)  (3,8)  (3,9)  (3,10)  (3,11)  (3,12)  (3,13)
+(4,2)  (4,3)  (4,4)  (4,9)  (4,10)  (4,11)
+(0,6)  (1,6)  (2,6)  (2,7)  (1,7)  (0,7)
+(4,0)
+"""
+
+[[keymap.layer]]
+name = "Base"
+keys = """
+Equal  Kc1  Kc2  Kc3  Kc4  Kc5  Kc6  Kc7  Kc8  Kc9  Kc0  Minus
+Tab  Q  W  E  R  T  Y  U  I  O  P  Backslash
+Escape  A  S  D  F  G  H  J  K  L  Semicolon  Quote
+TH(User21, MO(3), MAGIC)  Z  X  C  V  B  N  M  Comma  Dot  Slash  TD(0)
+Grave  Delete  Backspace  LGui  LeftBracket  RightBracket
+TD(1)  LShift  LCtrl  LAlt  Space  MT(Enter, RAlt, ENTER_ALT)
+User7
+"""
+
+[[keymap.layer]]
+name = "Keypad"
+keys = """
+No  F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11
+_  No  Home  Up  End  PageUp  Kp7  Kp8  Kp9  KpMinus  KpSlash  F12
+_  WM(Y, LCtrl)  Left  Down  Right  PageDown  Kp4  Kp5  Kp6  KpPlus  KpAsterisk  NumLock
+TH(User21, MO(3), MAGIC)  WM(Z, LCtrl)  WM(X, LCtrl)  WM(C, LCtrl)  WM(V, LCtrl)  WM(V, LCtrl | LShift)  Kp1  Kp2  Kp3  KpEnter  Equal  TO(0)
+No  _  _  Kp0  KpDot  Backspace
+MO(2)  _  _  _  _  Kp0
+_
+"""
+
+[[keymap.layer]]
+name = "SymbolNav"
+keys = """
+Insert  F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11
+ScrollLock  WM(Kc1, LShift)  Home  Up  End  PageUp  WM(Kc9, LShift)  WM(Kc0, LShift)  Up  WM(Kc5, LShift)  Application  F12
+CapsLock  WM(Kc2, LShift)  Left  Down  Right  PageDown  WM(Kc4, LShift)  Left  Down  Right  Pause  PrintScreen
+TH(User21, MO(3), MAGIC)  WM(Kc3, LShift)  LeftBracket  RightBracket  WM(LeftBracket, LShift)  WM(RightBracket, LShift)  WM(Kc7, LShift)  WM(Kc8, LShift)  WM(Minus, LShift)  WM(Equal, LShift)  LShift  LCtrl
+WM(Kc6, LShift)  _  _  _  WM(Tab, LCtrl | LShift)  WM(Tab, LCtrl)
+TO(0)  _  _  _  _  _
+_
+"""
+
+# The right half handles its own outer-column Bootloader and Reset keys, in src/right_keys.rs.
+[[keymap.layer]]
+name = "Magic"
+keys = """
+User6  BrightnessDown  BrightnessUp  MediaPrevTrack  MediaNextTrack  MediaPlayPause  AudioMute  AudioVolDown  AudioVolUp  No  No  Macro(0)
+Bootloader  RgbSpi  RgbSai  RgbHui  RgbVai  RgbTog  No  No  No  No  No  No
+Reboot  RgbSpd  RgbSad  RgbHud  RgbVad  RgbModeForward  No  No  No  No  No  No
+No  No  User0  User1  User2  User3  No  No  No  No  No  TO(4)
+User20  No  No  No  No  No
+No  No  No  No  No  No
+_
+"""
+
+[[keymap.layer]]
+name = "Factory"
+keys = """
+Kc0  Kc4  Kc8  Kc3  Kc8  Kc3  Kc3  Kc8  Kc3  Kc8  Kc4  Kc0
+Kc1  Kc5  Kc9  Kc4  Kc9  Kc4  Kc4  Kc9  Kc4  Kc9  Kc5  Kc1
+Kc2  Kc6  Kc0  Kc5  Kc0  Kc5  Kc5  Kc0  Kc5  Kc0  Kc6  Kc2
+Kc3  Kc7  Kc1  Kc6  Kc1  Kc6  Kc6  Kc1  Kc6  Kc1  Kc7  Kc3
+Kc2  Kc7  Kc2  Kc2  Kc7  Kc2
+Kc7  Kc8  Kc9  Kc9  Kc8  Kc7
+_
+"""
+
+# Same range as storage_partition in go60.dtsi. The default would be 0x60000, inside
+# the firmware image; the last sectors would hit the bootloader at 0xF4000.
+[storage]
+start_addr = 0xEC000
+num_sectors = 8
+
+[ble]
+enabled = true
+# CONFIG_BT_CTLR_TX_PWR_PLUS_8 in MoErgo's defconfigs
+default_tx_power = 8
+
+[host]
+vial_enabled = false
+
+[chip.nrf52840]
+# Matches BOARD_ENABLE_DCDC in MoErgo's board Kconfig, which covers only this regulator.
+dcdc_reg0 = false
+dcdc_reg1 = true
+# ZMK never writes UICR.REGOUT0, which sets the I/O voltage. Keep what the board has.
+dcdc_reg0_voltage = "unchanged"
+# Matches CONFIG_CLOCK_CONTROL_NRF_K32SRC_XTAL in MoErgo's defconfigs. Neither those nor the
+# DTS state the crystal's accuracy, so 150 isn't its spec: it's a deliberately wide guess, the
+# figure MoErgo's tree sets for the Advantage 360 Pro. Only for the Go60: firmware built with
+# this setting can stop at startup on a board without a crystal.
+lfclk_xtal_ppm = 150
+
+[rmk]
+ble_profiles_num = 4
+macro_max_num = 1
+custom_message_max_size = 8
+morse_max_num = 2
+# Matches ZMK's 120s idle timeout on the Go60. RMK defaults to never sleeping.
+split_central_sleep_timeout_seconds = 120
+
+# Extra subscribers: src/go60_keys.rs and src/underglow.rs read keymap actions, and
+# src/right_keys.rs reads the active layer. src/underglow.rs also reads battery,
+# connection, layer, lock, and sleep state, src/cirque.rs reads layer and sleep state,
+# and src/trackpad_speed.rs reads the active layer.
+[event]
+action.subs = 2
+layer_change.subs = 5
+led_indicator.subs = 4
+battery_status.subs = 1
+connection_status_change.subs = 2
+sleep_state.subs = 2
+
+# ZMK's tap-preferred hold-tap is RMK's normal mode with preserve_key_order, which
+# queues later keys until the hold-tap resolves.
+[behavior.morse]
+hold_timeout = "200ms"
+gap_timeout = "200ms"
+preserve_key_order = true
+
+[behavior.morse.profiles]
+# ZMK tap dances: pressing another key resolves them at once.
+TAP_DANCE = { hold_on_other_press = true, hold_timeout = "200ms", gap_timeout = "200ms" }
+# ZMK's `magic` hold-tap: tap for status LEDs, hold for the Magic layer.
+MAGIC = { hold_timeout = "200ms" }
+# ZMK's &mt is hold-preferred.
+ENTER_ALT = { hold_on_other_press = true, hold_timeout = "200ms" }
+
+# TD(0): hold for Keypad, double-tap to stay on it
+[[behavior.morse.morses]]
+hold = "MO(1)"
+double_tap = "TO(1)"
+profile = "TAP_DANCE"
+
+# TD(1): hold for SymbolNav, double-tap to stay on it
+[[behavior.morse.morses]]
+hold = "MO(2)"
+double_tap = "TO(2)"
+profile = "TAP_DANCE"
+
+# Macro 0: clear every BLE profile (ZMK's BT_CLR_ALL), ending on profile 0.
+[[behavior.macro.macros]]
+operations = [
+  { operation = "tap", keycode = "User3" },
+  { operation = "tap", keycode = "User6" },
+  { operation = "tap", keycode = "User2" },
+  { operation = "tap", keycode = "User6" },
+  { operation = "tap", keycode = "User1" },
+  { operation = "tap", keycode = "User6" },
+  { operation = "tap", keycode = "User0" },
+  { operation = "tap", keycode = "User6" },
+]
+
+# BLE is the configured link. src/wired.rs adds the TRRS link, and the cable selects
+# which one the right half uses.
+[split]
+connection = "ble"
+
+[split.central]
+rows = 5
+cols = 7
+row_offset = 0
+col_offset = 0
+ble_addr = [0x3c, 0x60, 0x1e, 0xa7, 0x5b, 0xd2]
+
+[split.central.battery]
+battery_adc_pin = "vddh"
+# ZMK's battery range starts here, not at RMK's default of 3600.
+battery_empty_mv = 3450
+
+[split.central.matrix]
+debouncer = "fast"
+matrix_type = "normal"
+row2col = true
+row_pins = ["P1_01", "P1_03", "P1_05", "P1_07", "P1_06"]
+col_pins = ["P0_24", "P0_20", "P0_17", "P0_15", "P0_16", "P0_13", "P0_14"]
+
+[[split.peripheral]]
+rows = 5
+cols = 7
+row_offset = 0
+col_offset = 7
+ble_addr = [0x81, 0xf4, 0x2a, 0x6e, 0x0d, 0xe9]
+
+[split.peripheral.battery]
+battery_adc_pin = "vddh"
+# ZMK's battery range starts here, not at RMK's default of 3600.
+battery_empty_mv = 3450
+
+[split.peripheral.matrix]
+debouncer = "fast"
+matrix_type = "normal"
+row2col = true
+row_pins = ["P1_01", "P1_03", "P1_05", "P1_07", "P1_06"]
+col_pins = ["P0_14", "P0_13", "P0_16", "P0_15", "P0_17", "P0_20", "P0_24"]
