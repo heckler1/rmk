@@ -9,6 +9,9 @@ pub enum Overwritten {
     ChipConfig,
     ChipInit,
     Entry,
+    /// `#[Override(split_transport)]` on a BLE split peripheral: its body evaluates to the
+    /// future to run instead of the generated `run_rmk_split_peripheral` call.
+    SplitTransport,
     /// `#[Override(bind_interrupt)]` — the form the stm32h7 example documents. Selected by
     /// `bind_interrupt.rs` through this shared matcher; the legacy bare `#[bind_interrupt]`
     /// marker is also still accepted there for backward compatibility.

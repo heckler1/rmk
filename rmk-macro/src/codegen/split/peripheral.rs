@@ -517,6 +517,21 @@ fn expand_split_peripheral(
             quote! {}
         };
 
+    let transport_override = item_mod.content.as_ref().and_then(|(_, items)| {
+        items.iter().find_map(|item| match item {
+            syn::Item::Fn(item_fn)
+                if matches!(
+                    crate::codegen::override_helper::find_overwritten(item_fn),
+                    Some(Ok(crate::codegen::override_helper::Overwritten::SplitTransport))
+                ) =>
+            {
+                let content = &item_fn.block.stmts;
+                Some(quote! { { #(#content)* } })
+            }
+            _ => None,
+        })
+    });
+
     let run_rmk_peripheral = expand_split_peripheral_entry(
         id,
         chip,
@@ -528,6 +543,7 @@ fn expand_split_peripheral(
         watchdog_task,
         usb_task_future,
         dfu_task,
+        transport_override,
     );
 
     quote! {
@@ -557,6 +573,7 @@ fn expand_split_peripheral_entry(
     watchdog_task: Option<TokenStream2>,
     usb_task_future: Option<TokenStream2>,
     dfu_task: Option<TokenStream2>,
+    transport_override: Option<TokenStream2>,
 ) -> TokenStream2 {
     // Add matrix to devices, and run all devices
     let mut devs = devices.clone();
@@ -583,13 +600,13 @@ fn expand_split_peripheral_entry(
 
     match split_config.connection {
         SplitConnection::Ble => {
-            let peripheral_run = quote! {
+            let peripheral_run = transport_override.unwrap_or(quote! {
                 ::rmk::split::peripheral::run_rmk_split_peripheral(
                     #id,
                     ble_controller,
                     ble_addr,
                 )
-            };
+            });
             // Build task list: device, processor (if any), peripheral, registered_processors, dfu
             let mut tasks = vec![device_task];
             if !processors.is_empty() {
