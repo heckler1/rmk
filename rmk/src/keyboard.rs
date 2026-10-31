@@ -533,7 +533,10 @@ impl<'a> Keyboard<'a> {
                 }
                 HeldKeyDecision::PermissiveHold | HeldKeyDecision::HoldOnOtherKeyPress => {
                     if let Some(mut held_key) = self.held_buffer.remove_if(|k| k.event.source == source) {
-                        let action = if held_key.event.source.is_physical() {
+                        // A released key has left the layer cache, and its layer may be gone too.
+                        let action = if self.layer_may_have_risen_under(&held_key)
+                            && !matches!(held_key.state, KeyState::Released(_))
+                        {
                             self.keymap.get_action_with_layer_cache(held_key.event)
                         } else {
                             held_key.action
@@ -580,7 +583,7 @@ impl<'a> Keyboard<'a> {
                         // Always re-evaluate a physical key based on current layer state.
                         // A prior layer change (e.g. permissive hold activating a layer)
                         // may have changed what action this key maps to.
-                        let key_action = if held_key.event.source.is_physical() {
+                        let key_action = if self.layer_may_have_risen_under(&held_key) {
                             self.keymap.get_action_with_layer_cache(held_key.event)
                         } else {
                             held_key.action
@@ -670,6 +673,16 @@ impl<'a> Keyboard<'a> {
             }
         }
         (keyboard_state_updated, decision_for_current_key)
+    }
+
+    /// Whether a key resolved under `key` is still held, and so may have activated a
+    /// layer after `key` was pressed. Otherwise `key` keeps the action it was pressed
+    /// with, even if the layer that supplied it has since gone.
+    fn layer_may_have_risen_under(&self, key: &HeldKey) -> bool {
+        key.event.source.is_physical()
+            && self.held_buffer.keys.iter().any(|k| {
+                k.press_time <= key.press_time && matches!(k.state, KeyState::ProcessedButReleaseNotReportedYet(_))
+            })
     }
 
     /// Make decisions for current key and each held key.

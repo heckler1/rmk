@@ -1,0 +1,72 @@
+# A tap dance still waiting out its gap keeps the action it was pressed with,
+# even once the layer that supplied it is gone.
+#
+# The fixture has MO(1)@(0,0), a tap-hold E@(0,1) with a tap dance over it on
+# layer 1, and a plain A@(0,2). The tap dance taps and holds to a one-shot Gui,
+# and a key press resolves it at once.
+
+[layout]
+rows = 1
+cols = 3
+map = """
+(0,0,L)  (0,1,L)  (0,2,L)
+"""
+
+[behavior.morse]
+hold_on_other_press = true
+
+[[behavior.morse.morses]]
+tap = "OSM(LGui)"
+hold = "OSM(LGui)"
+double_tap = "B"
+
+[[keymap.layer]]
+keys = """
+MO(1)  TH(E, F)  A
+"""
+
+[[keymap.layer]]
+keys = """
+_  TD(0)  _
+"""
+
+[[test]]
+name = "next_press_after_layer_release_resolves_pressed_action"
+steps = [
+  { press = [0, 0] },    # Press MO(1), layer 1 on
+  { tap = { pos = [0, 1], duration = 10 } },
+  { release = [0, 0] },  # Release MO(1) inside the tap dance's gap
+  { delay = 10 },
+  { tap = { pos = [0, 2], duration = 10 } },  # Must resolve to OSM, not layer 0 E
+]
+expect = [["LGui", "A"], []]
+
+[[test]]
+name = "layer_released_before_tap_dance_release_keeps_pressed_action"
+steps = [
+  { press = [0, 0] },    # Press MO(1), layer 1 on
+  { press = [0, 1] },    # Press the tap dance
+  { delay = 10 },
+  { release = [0, 0] },  # Release MO(1) while the tap dance is still down
+  { delay = 10 },
+  { release = [0, 1] },  # Must tap OSM, not layer 0 E
+  { delay = 10 },
+  { tap = { pos = [0, 2], duration = 10 } },
+]
+expect = [["LGui", "A"], []]
+
+[[test]]
+name = "layer_released_before_hold_resolves_keeps_pressed_action"
+steps = [
+  { press = [0, 0] },    # Press MO(1), layer 1 on
+  { press = [0, 1] },    # Press the tap dance
+  { delay = 10 },
+  { release = [0, 0] },  # Release MO(1) while the tap dance is still down
+  { delay = 10 },
+  { press = [0, 2] },    # Resolves the hold: must be OSM, not layer 0 F
+  { delay = 10 },
+  { release = [0, 1] },
+  { delay = 10 },
+  { release = [0, 2] },
+]
+expect = [["LGui", "A"], ["A"], []]
