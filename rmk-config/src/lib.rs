@@ -788,6 +788,10 @@ pub enum DcdcReg0Voltage {
     V3_3,
     #[serde(rename = "1V8")]
     V1_8,
+    /// Leave UICR.REGOUT0 as it is. Writes to it can only be undone by erasing UICR,
+    /// so use this on boards that a bootloader or factory step has already configured.
+    #[serde(rename = "unchanged")]
+    Unchanged,
 }
 
 /// Config for chip-specific settings

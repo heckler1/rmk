@@ -17,7 +17,7 @@ dcdc_reg0 = true
 # Enable DCDC regulator 1
 dcdc_reg1 = true
 # Set DCDC regulator 0 voltage
-dcdc_reg0_voltage = "3V3"  # Options: "3V3" or "1V8"
+dcdc_reg0_voltage = "3V3"  # Options: "3V3", "1V8" or "unchanged" (leave UICR.REGOUT0 as it is)
 ```
 
 ::: danger Hardware Requirement
@@ -41,7 +41,7 @@ The nRF52833 has one DC/DC regulator available for configuration. Its REG0 stage
 # Enable DCDC regulator 1
 dcdc_reg1 = true
 # REG0 output voltage (VDD) when supplied through VDDH, stored in UICR.REGOUT0.
-dcdc_reg0_voltage = "3V3"  # Options: "3V3" or "1V8"
+dcdc_reg0_voltage = "3V3"  # Options: "3V3", "1V8" or "unchanged" (leave UICR.REGOUT0 as it is)
 ```
 
 ::: danger Hardware Requirement

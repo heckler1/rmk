@@ -60,13 +60,18 @@ pub(crate) fn chip_init_default(hardware: &Hardware, peripheral_id: Option<usize
                 let reg0_enabled = chip_cfg.dcdc_reg0.unwrap_or(true);
                 let reg1_enabled = chip_cfg.dcdc_reg1.unwrap_or(true);
                 let (reg0_voltage, reg0_voltage_str) = match chip_cfg.dcdc_reg0_voltage {
-                    Some(DcdcReg0Voltage::V1_8) => {
-                        (quote! { ::embassy_nrf::config::Reg0Voltage::_1V8 }, "1V8")
-                    }
-                    _ => (quote! { ::embassy_nrf::config::Reg0Voltage::_3V3 }, "3V3"),
+                    Some(DcdcReg0Voltage::V1_8) => (
+                        quote! { config.dcdc.reg0_voltage = Some(::embassy_nrf::config::Reg0Voltage::_1V8); },
+                        "1V8",
+                    ),
+                    Some(DcdcReg0Voltage::Unchanged) => (quote! {}, "unchanged"),
+                    _ => (
+                        quote! { config.dcdc.reg0_voltage = Some(::embassy_nrf::config::Reg0Voltage::_3V3); },
+                        "3V3",
+                    ),
                 };
                 quote! {
-                    config.dcdc.reg0_voltage = Some(#reg0_voltage);
+                    #reg0_voltage
                     config.dcdc.reg0 = #reg0_enabled;
                     config.dcdc.reg1 = #reg1_enabled;
                     ::defmt::info!("DCDC config: reg0_voltage={}, reg0={}, reg1={}", #reg0_voltage_str, #reg0_enabled, #reg1_enabled);
@@ -82,7 +87,7 @@ pub(crate) fn chip_init_default(hardware: &Hardware, peripheral_id: Option<usize
                     Some(DcdcReg0Voltage::V3_3) => quote! {
                         config.dcdc.reg0_voltage = Some(::embassy_nrf::config::Reg0Voltage::_3V3);
                     },
-                    None => quote! {},
+                    Some(DcdcReg0Voltage::Unchanged) | None => quote! {},
                 };
                 quote! {
                     config.dcdc.reg1 = #reg1_enabled;
@@ -306,6 +311,11 @@ mod tests {
 
     /// The chip init generated for an nRF52833 keyboard whose `[chip.nrf52833]` holds `chip_section`.
     fn nrf52833_chip_init(name: &str, chip_section: &str) -> String {
+        chip_init("nrf52833", name, chip_section)
+    }
+
+    /// The chip init generated for a `chip` keyboard whose `[chip.<chip>]` holds `chip_section`.
+    fn chip_init(chip: &str, name: &str, chip_section: &str) -> String {
         let path =
             std::env::temp_dir().join(format!("rmk-macro-{name}-{}.toml", std::process::id()));
         let toml = format!(
@@ -314,7 +324,7 @@ mod tests {
 name = "REG0 test"
 vendor_id = 0x4c4b
 product_id = 0x4643
-chip = "nrf52833"
+chip = "{chip}"
 
 [matrix]
 row_pins = ["P0_02"]
@@ -324,7 +334,7 @@ col_pins = ["P0_03"]
 rows = 1
 cols = 1
 
-[chip.nrf52833]
+[chip.{chip}]
 {chip_section}
 "#
         );
@@ -351,5 +361,11 @@ cols = 1
     fn nrf52833_leaves_reg0_alone_unless_configured() {
         let tokens = nrf52833_chip_init("reg0-unset", "dcdc_reg1 = true");
         assert!(!tokens.contains("reg0_voltage"), "{tokens}");
+    }
+
+    #[test]
+    fn nrf52840_leaves_reg0_alone_when_unchanged() {
+        let tokens = chip_init("nrf52840", "reg0-unchanged", r#"dcdc_reg0_voltage = "unchanged""#);
+        assert!(!tokens.contains("Reg0Voltage"), "{tokens}");
     }
 }
