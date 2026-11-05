@@ -29,10 +29,10 @@ name = "Base"
 keys = """
 Escape  TH(Kc1, Macro(0))  TH(Kc2, Macro(1))  TH(Kc3, Macro(2))  TH(Kc4, Macro(3))  TH(Kc5, Macro(4))  TH(Kc6, Macro(5))  TH(Kc7, Macro(6))  TH(Kc8, Macro(7))  TH(Kc9, Macro(8))  TH(Kc0, Macro(9))  Backspace
 Tab  TH(Q, Macro(10))  TH(W, Macro(11))  TH(E, Macro(12))  TH(R, Macro(13))  TH(T, Macro(14))  TH(Y, Macro(15))  TH(U, Macro(16))  TH(I, Macro(17))  TH(O, Macro(18))  TH(P, Macro(19))  TH(Equal, Macro(20))
-TD(0)  TH(A, Macro(21))  TH(S, Macro(22))  TH(D, Macro(23))  TH(F, Macro(24))  TH(G, Macro(25))  TH(H, Macro(26))  TH(J, Macro(27))  TH(K, Macro(28))  TH(L, Macro(29))  TH(Semicolon, Macro(30))  TH(Backslash, Macro(31))
+MO(1)  TH(A, Macro(21))  TH(S, Macro(22))  TH(D, Macro(23))  TH(F, Macro(24))  TH(G, Macro(25))  TH(H, Macro(26))  TH(J, Macro(27))  TH(K, Macro(28))  TH(L, Macro(29))  TH(Semicolon, Macro(30))  TH(Backslash, Macro(31))
 LShift  TH(Z, Macro(32))  TH(X, Macro(33))  TH(C, Macro(34))  TH(V, Macro(35))  TH(Grave, Macro(36))  TH(B, Macro(37))  TH(N, Macro(38))  TH(M, Macro(39))  TH(Comma, Macro(40))  TH(Dot, Macro(41))  No
 Left  Right  No  No  TH(LeftBracket, Macro(42))  TH(RightBracket, Macro(43))
-TD(0)  TH(User21, MO(2), MAGIC)  _  Backspace  TH(Enter, Macro(44))  Space
+MO(1)  MO(2)  User21  Backspace  TH(Enter, Macro(44))  Space
 User7
 """
 
@@ -40,8 +40,8 @@ User7
 name = "Symbols"
 keys = """
 _  F1  F2  F3  F4  F5  F6  F7  F8  F9  F10  F11
-_  TD(5)  WM(Left, LCtrl)  WM(Up, LCtrl)  WM(Right, LCtrl)  PageUp  WM(Quote, LShift)  Quote  _  _  _  F12
-_  TD(1)  TD(2)  TD(3)  TD(4)  PageDown  Slash  WM(Slash, LShift)  TD(3)  TD(2)  TD(1)  Home
+_  TD(4)  WM(Left, LCtrl)  WM(Up, LCtrl)  WM(Right, LCtrl)  PageUp  WM(Quote, LShift)  Quote  _  _  _  F12
+_  TD(0)  TD(1)  TD(2)  TD(3)  PageDown  Slash  WM(Slash, LShift)  TD(2)  TD(1)  TD(0)  Home
 _  WM(Z, LGui)  WM(X, LGui)  WM(C, LGui)  WM(V, LGui)  WM(Grave, LShift)  WM(Minus, LShift)  Minus  _  _  Equal  End
 AudioVolDown  AudioVolUp  _  _  _  _
 MO(2)  _  _  MouseBtn1  _  Enter
@@ -92,7 +92,7 @@ ble_profiles_num = 4
 macro_space_size = 512
 macro_max_num = 46
 custom_message_max_size = 8
-morse_max_num = 6
+morse_max_num = 5
 # Matches ZMK's 120s idle timeout on the Go60. RMK defaults to never sleeping.
 split_central_sleep_timeout_seconds = 120
 
@@ -125,16 +125,8 @@ preserve_key_order = true
 [behavior.morse.profiles]
 # ZMK tap dances: a 200ms term, and pressing another key resolves them at once.
 TAP_DANCE = { hold_on_other_press = true, hold_timeout = "200ms", gap_timeout = "200ms" }
-# ZMK's `magic` hold-tap: tap for status LEDs, hold for the Magic layer.
-MAGIC = { hold_timeout = "200ms" }
 
-# TD(0): hold for Symbols, double-tap to stay on it
-[[behavior.morse.morses]]
-hold = "MO(1)"
-double_tap = "TO(1)"
-profile = "TAP_DANCE"
-
-# TD(1..4): one-shot modifier, double-tap to latch it for 10s
+# TD(0..3): one-shot modifier, double-tap to latch it for 10s
 [[behavior.morse.morses]]
 tap = "OSM(LCtrl)"
 hold = "OSM(LCtrl)"
@@ -159,7 +151,7 @@ hold = "OSM(LShift)"
 double_tap = "User19"
 profile = "TAP_DANCE"
 
-# TD(5): double-tap to lock macOS
+# TD(4): double-tap to lock macOS
 [[behavior.morse.morses]]
 double_tap = "WM(Q, LGui | LCtrl)"
 profile = "TAP_DANCE"

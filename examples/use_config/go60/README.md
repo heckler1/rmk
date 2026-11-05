@@ -37,7 +37,7 @@ Enter bootloader mode the same way and copy your MoErgo UF2 to each half. This f
 
 ## LEDs
 
-Tap the Magic key to show status on the left half for 10 seconds. Rows count down from the top of the left half:
+Tap the third left thumb key to show status on the left half for 10 seconds. Rows count down from the top of the left half:
 
 | LEDs | Shows |
 | --- | --- |

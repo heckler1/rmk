@@ -10,7 +10,7 @@ use rmk::types::action::Action;
 use rmk::types::keycode::HidKeyCode;
 
 const LATCH_TIME: Duration = Duration::from_secs(10);
-/// `User16..=User19`, in the order of `TD(1..=4)` in keyboard.toml.
+/// `User16..=User19`, in the order of `TD(0..=3)` in keyboard.toml.
 const LATCH_FIRST_ID: u8 = 16;
 const LATCHED_MODIFIERS: [HidKeyCode; 4] = [
     HidKeyCode::LCtrl,
