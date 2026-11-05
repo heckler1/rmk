@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Go60 Keymap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one wide plate drawn from MoErgo's physical layout, layer tabs above, key details below. */
+:root {
+  --bg: #eef0f3;
+  --plate: #dfe3e9;
+  --cap: #fbfcfd;
+  --cap-edge: #c3cad4;
+  --ink: #1c2330;
+  --ink-soft: #5b6676;
+  --ink-faint: #9aa4b2;
+  --l0: #2f6f8f;
+  --l1: #b26b12;
+  --l2: #6e4fb3;
+  --l0-soft: #d7e8f1;
+  --l1-soft: #f6e3c8;
+  --l2-soft: #e4dcf5;
+  --danger: #b33a3a;
+  --danger-soft: #f6dcdc;
+  --mod-cap: #eef1f5;
+  --focus: #2f6f8f;
+  --sans: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181e; --plate: #1d232b; --cap: #2a313b; --cap-edge: #3b4450;
+    --ink: #e8ecf1; --ink-soft: #a3adba; --ink-faint: #67717e;
+    --l0: #6fb3d6; --l1: #e6a24e; --l2: #a98ae8;
+    --l0-soft: #1f3a49; --l1-soft: #4a3418; --l2-soft: #352a52;
+    --danger: #ec7b7b; --danger-soft: #4a2323; --mod-cap: #242a33; --focus: #6fb3d6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14181e; --plate: #1d232b; --cap: #2a313b; --cap-edge: #3b4450;
+  --ink: #e8ecf1; --ink-soft: #a3adba; --ink-faint: #67717e;
+  --l0: #6fb3d6; --l1: #e6a24e; --l2: #a98ae8;
+  --l0-soft: #1f3a49; --l1-soft: #4a3418; --l2-soft: #352a52;
+  --danger: #ec7b7b; --danger-soft: #4a2323; --mod-cap: #242a33; --focus: #6fb3d6;
+  color-scheme: dark;
+}
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+}
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 40px;
+  display: grid; gap: 20px;
+}
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+.sub { margin: 2px 0 0; color: var(--ink-soft); font-size: 14px; }
+.tabs { display: flex; gap: 6px; background: var(--plate); padding: 4px; border-radius: 10px; }
+.tabs button {
+  font: inherit; font-weight: 600; font-size: 14px; color: var(--ink-soft);
+  background: transparent; border: 0; border-radius: 7px; padding: 6px 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+}
+.tabs button .n { font-family: var(--mono); font-size: 11px; opacity: .7; }
+.tabs button .dot { width: 9px; height: 9px; border-radius: 50%; }
+.tabs button[aria-selected="true"] { background: var(--cap); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+.tabs button:focus-visible, .key:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.plate { background: var(--plate); border-radius: 18px; padding: 18px; overflow-x: auto; }
+svg.board { display: block; width: 100%; min-width: 760px; height: auto; }
+.key { cursor: pointer; outline: none; }
+.key rect.cap { fill: var(--cap); stroke: var(--cap-edge); stroke-width: 2; }
+.key.k-mod rect.cap, .key.k-nav rect.cap, .key.k-fn rect.cap, .key.k-media rect.cap,
+.key.k-rgb rect.cap, .key.k-bt rect.cap, .key.k-system rect.cap { fill: var(--mod-cap); }
+.key.k-layer0 rect.cap { fill: var(--l0-soft); stroke: var(--l0); }
+.key.k-layer1 rect.cap { fill: var(--l1-soft); stroke: var(--l1); }
+.key.k-layer2 rect.cap { fill: var(--l2-soft); stroke: var(--l2); }
+.key.k-danger rect.cap { fill: var(--danger-soft); stroke: var(--danger); }
+.key.k-none rect.cap { fill: transparent; stroke: var(--cap-edge); stroke-dasharray: 2 6; }
+.key.k-trans rect.cap { fill: transparent; stroke: var(--ink-faint); stroke-dasharray: 8 6; }
+.key text { fill: var(--ink); font-family: var(--sans); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.key text.hold { fill: var(--ink-soft); font-size: 15px; }
+.key text.dbl { fill: var(--ink-soft); font-size: 13px; text-anchor: end; }
+.key.k-trans text { fill: var(--ink-faint); }
+.key.k-danger text.main { fill: var(--danger); }
+.key.k-layer0 text.main { fill: var(--l0); font-weight: 700; }
+.key.k-layer1 text.main { fill: var(--l1); font-weight: 700; }
+.key.k-layer2 text.main { fill: var(--l2); font-weight: 700; }
+.key:hover rect.cap { stroke: var(--ink-soft); }
+.key.sel rect.cap { stroke: var(--focus); stroke-width: 5; stroke-dasharray: none; }
+.half-label { fill: var(--ink-faint); font: 600 16px var(--sans); letter-spacing: .12em; text-anchor: middle; }
+.below { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .below { grid-template-columns: minmax(0, 1fr); } }
+.detail { background: var(--cap); border: 1px solid var(--cap-edge); border-radius: 12px; padding: 16px 18px; min-height: 132px; display: grid; gap: 6px; align-content: start; }
+.detail .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.detail h2 { margin: 0; font-size: 20px; }
+.detail p { margin: 0; max-width: 62ch; }
+.detail code, .legend code { font-family: var(--mono); font-size: 13px; background: var(--plate); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+.legend { display: grid; gap: 10px; font-size: 14px; color: var(--ink-soft); }
+.legend h3 { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.legend ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.legend li { display: flex; gap: 10px; align-items: center; }
+.sw { flex: none; width: 22px; height: 16px; border-radius: 4px; border: 2px solid var(--cap-edge); background: var(--cap); }
+.anat { display: flex; gap: 14px; align-items: center; }
+.anat svg { flex: none; width: 74px; height: 74px; }
+footer { color: var(--ink-faint); font-size: 13px; }
+@media (prefers-reduced-motion: no-preference) { .key rect.cap { transition: stroke .12s, fill .12s; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Go60 Keymap</h1>
+      <p class="sub">Moonlander AutoShift layout, as built from <code style="font-family:var(--mono);font-size:13px">examples/use_config/go60/keyboard.toml</code></p>
+    </div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+  </header>
+
+  <div class="plate"><svg class="board" id="board" viewBox="-20 -30 1790 700" role="img" aria-label="Go60 key layout"></svg></div>
+
+  <div class="below">
+    <section class="detail" id="detail" aria-live="polite"></section>
+    <aside class="legend">
+      <div class="anat">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <rect x="4" y="4" width="92" height="92" rx="12" fill="var(--cap)" stroke="var(--cap-edge)" stroke-width="2"/>
+          <text x="50" y="44" text-anchor="middle" dominant-baseline="central" font-size="30" font-family="var(--sans)" fill="var(--ink)">A</text>
+          <text x="50" y="80" text-anchor="middle" dominant-baseline="central" font-size="14" font-family="var(--sans)" fill="var(--ink-soft)">hold</text>
+          <text x="88" y="18" text-anchor="end" dominant-baseline="central" font-size="12" font-family="var(--sans)" fill="var(--ink-soft)">2×</text>
+        </svg>
+        <span>Tap in the middle, hold at the bottom, double-tap in the top corner. Select a key for details.</span>
+      </div>
+      <ul>
+        <li><span class="sw" style="background:var(--l1-soft);border-color:var(--l1)"></span>Hold for Symbols</li>
+        <li><span class="sw" style="background:var(--l2-soft);border-color:var(--l2)"></span>Hold for Magic</li>
+        <li><span class="sw" style="background:var(--danger-soft);border-color:var(--danger)"></span>Resets, bootloader, or clears pairings</li>
+        <li><span class="sw" style="background:transparent;border-style:dashed;border-color:var(--ink-faint)"></span>Transparent: falls through to Base</li>
+      </ul>
+    </aside>
+  </div>
+
+  <footer>Key positions from MoErgo's <code style="font-family:var(--mono)">go60-layouts.dtsi</code>. The hidden output-toggle position (4,0) has no physical key and isn't shown.</footer>
+</div>
+
+<script>
+const DATA = __DATA__;
+const NS = 'http://www.w3.org/2000/svg';
+const board = document.getElementById('board');
+const tabs = document.getElementById('tabs');
+const detail = document.getElementById('detail');
+const LAYER_COLOR = ['var(--l0)', 'var(--l1)', 'var(--l2)'];
+let layer = 0, sel = 55;
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+DATA.layers.forEach((l, i) => {
+  const b = document.createElement('button');
+  b.id = 'tab-' + i;
+  b.setAttribute('role', 'tab');
+  b.innerHTML = `<span class="dot" style="background:${LAYER_COLOR[i]}"></span>${l.name}<span class="n">L${i}</span>`;
+  b.onclick = () => { layer = i; render(); };
+  tabs.appendChild(b);
+});
+
+function mainSize(label) {
+  if (label.length <= 2) return 32;
+  if (label.length <= 4) return 24;
+  return 19;
+}
+
+function render() {
+  [...tabs.children].forEach((b, i) => b.setAttribute('aria-selected', i === layer));
+  board.replaceChildren();
+  el('text', { x: 300, y: -8, class: 'half-label' }, board).textContent = 'LEFT';
+  el('text', { x: 1450, y: -8, class: 'half-label' }, board).textContent = 'RIGHT';
+  const keys = DATA.layers[layer].keys;
+  DATA.keys.forEach((p, i) => {
+    let k = keys[i];
+    const ghost = k.kind === 'trans' ? DATA.layers[0].keys[i] : null;
+    const g = el('g', {
+      class: 'key k-' + k.kind + (i === sel ? ' sel' : ''), tabindex: 0, role: 'button',
+      transform: `rotate(${p.rot} ${p.rx} ${p.ry}) translate(${p.x} ${p.y})`,
+      'aria-label': `${p.pos}: ${k.desc}`,
+    }, board);
+    el('rect', { class: 'cap', x: 5, y: 5, width: 90, height: 90, rx: 12 }, g);
+    const show = ghost || k;
+    const label = show.tap || '';
+    const lines = label.length > 6 && label.includes(' ') ? [label.slice(0, label.lastIndexOf(' ')), label.slice(label.lastIndexOf(' ') + 1)] : [label];
+    const cy = show.hold ? 42 : 50;
+    lines.forEach((ln, j) => {
+      const fs = lines.length > 1 ? 17 : mainSize(ln);
+      const t = el('text', { class: 'main', x: 50, y: cy + (j - (lines.length - 1) / 2) * 20, 'font-size': fs }, g);
+      t.textContent = ln;
+    });
+    if (show.hold) el('text', { class: 'hold', x: 50, y: 78 }, g).textContent = show.hold;
+    if (show.dbl) el('text', { class: 'dbl', x: 87, y: 20 }, g).textContent = '2× ' + show.dbl;
+    g.onclick = () => { sel = i; render(); };
+    g.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sel = i; render(); board.children[i + 2].focus(); } };
+  });
+  const k = keys[sel], p = DATA.keys[sel];
+  const where = p.thumb ? `${p.side} thumb ${p.side === 'left' ? sel - 53 : 60 - sel}` : `${p.side} half`;
+  let desc = k.desc;
+  if (k.kind === 'trans') desc += ' On Base: ' + DATA.layers[0].keys[sel].desc;
+  detail.innerHTML = `<div class="eyebrow">${DATA.layers[layer].name} · ${where} · matrix ${p.pos}</div>
+    <h2></h2><p></p><div><code></code></div>`;
+  detail.querySelector('h2').textContent = k.kind === 'trans' ? 'Transparent' : k.kind === 'none' ? 'Unassigned' : (k.tap || (k.dbl ? '2× ' + k.dbl : ''));
+  detail.querySelector('p').textContent = desc;
+  detail.querySelector('code').textContent = k.code;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('.key')) return;
+  const n = Number(e.key) - 1;
+  if (n >= 0 && n < DATA.layers.length) { layer = n; render(); }
+});
+render();
+</script>
+</body>
+</html>

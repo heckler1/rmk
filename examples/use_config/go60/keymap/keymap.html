@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Go60 Keymap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one wide plate drawn from MoErgo's physical layout, layer tabs above, key details below. */
+:root {
+  --bg: #eef0f3;
+  --plate: #dfe3e9;
+  --cap: #fbfcfd;
+  --cap-edge: #c3cad4;
+  --ink: #1c2330;
+  --ink-soft: #5b6676;
+  --ink-faint: #9aa4b2;
+  --l0: #2f6f8f;
+  --l1: #b26b12;
+  --l2: #6e4fb3;
+  --l0-soft: #d7e8f1;
+  --l1-soft: #f6e3c8;
+  --l2-soft: #e4dcf5;
+  --danger: #b33a3a;
+  --danger-soft: #f6dcdc;
+  --mod-cap: #eef1f5;
+  --focus: #2f6f8f;
+  --sans: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181e; --plate: #1d232b; --cap: #2a313b; --cap-edge: #3b4450;
+    --ink: #e8ecf1; --ink-soft: #a3adba; --ink-faint: #67717e;
+    --l0: #6fb3d6; --l1: #e6a24e; --l2: #a98ae8;
+    --l0-soft: #1f3a49; --l1-soft: #4a3418; --l2-soft: #352a52;
+    --danger: #ec7b7b; --danger-soft: #4a2323; --mod-cap: #242a33; --focus: #6fb3d6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14181e; --plate: #1d232b; --cap: #2a313b; --cap-edge: #3b4450;
+  --ink: #e8ecf1; --ink-soft: #a3adba; --ink-faint: #67717e;
+  --l0: #6fb3d6; --l1: #e6a24e; --l2: #a98ae8;
+  --l0-soft: #1f3a49; --l1-soft: #4a3418; --l2-soft: #352a52;
+  --danger: #ec7b7b; --danger-soft: #4a2323; --mod-cap: #242a33; --focus: #6fb3d6;
+  color-scheme: dark;
+}
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+}
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 40px;
+  display: grid; gap: 20px;
+}
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+.sub { margin: 2px 0 0; color: var(--ink-soft); font-size: 14px; }
+.tabs { display: flex; gap: 6px; background: var(--plate); padding: 4px; border-radius: 10px; }
+.tabs button {
+  font: inherit; font-weight: 600; font-size: 14px; color: var(--ink-soft);
+  background: transparent; border: 0; border-radius: 7px; padding: 6px 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+}
+.tabs button .n { font-family: var(--mono); font-size: 11px; opacity: .7; }
+.tabs button .dot { width: 9px; height: 9px; border-radius: 50%; }
+.tabs button[aria-selected="true"] { background: var(--cap); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+.tabs button:focus-visible, .key:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.plate { background: var(--plate); border-radius: 18px; padding: 18px; overflow-x: auto; }
+svg.board { display: block; width: 100%; min-width: 760px; height: auto; }
+.key { cursor: pointer; outline: none; }
+.key rect.cap { fill: var(--cap); stroke: var(--cap-edge); stroke-width: 2; }
+.key.k-mod rect.cap, .key.k-nav rect.cap, .key.k-fn rect.cap, .key.k-media rect.cap,
+.key.k-rgb rect.cap, .key.k-bt rect.cap, .key.k-system rect.cap { fill: var(--mod-cap); }
+.key.k-layer0 rect.cap { fill: var(--l0-soft); stroke: var(--l0); }
+.key.k-layer1 rect.cap { fill: var(--l1-soft); stroke: var(--l1); }
+.key.k-layer2 rect.cap { fill: var(--l2-soft); stroke: var(--l2); }
+.key.k-danger rect.cap { fill: var(--danger-soft); stroke: var(--danger); }
+.key.k-none rect.cap { fill: transparent; stroke: var(--cap-edge); stroke-dasharray: 2 6; }
+.key.k-trans rect.cap { fill: transparent; stroke: var(--ink-faint); stroke-dasharray: 8 6; }
+.key text { fill: var(--ink); font-family: var(--sans); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.key text.hold { fill: var(--ink-soft); font-size: 15px; }
+.key text.dbl { fill: var(--ink-soft); font-size: 13px; text-anchor: end; }
+.key.k-trans text { fill: var(--ink-faint); }
+.key.k-danger text.main { fill: var(--danger); }
+.key.k-layer0 text.main { fill: var(--l0); font-weight: 700; }
+.key.k-layer1 text.main { fill: var(--l1); font-weight: 700; }
+.key.k-layer2 text.main { fill: var(--l2); font-weight: 700; }
+.key:hover rect.cap { stroke: var(--ink-soft); }
+.key.sel rect.cap { stroke: var(--focus); stroke-width: 5; stroke-dasharray: none; }
+.half-label { fill: var(--ink-faint); font: 600 16px var(--sans); letter-spacing: .12em; text-anchor: middle; }
+.below { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .below { grid-template-columns: minmax(0, 1fr); } }
+.detail { background: var(--cap); border: 1px solid var(--cap-edge); border-radius: 12px; padding: 16px 18px; min-height: 132px; display: grid; gap: 6px; align-content: start; }
+.detail .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.detail h2 { margin: 0; font-size: 20px; }
+.detail p { margin: 0; max-width: 62ch; }
+.detail code, .legend code { font-family: var(--mono); font-size: 13px; background: var(--plate); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+.legend { display: grid; gap: 10px; font-size: 14px; color: var(--ink-soft); }
+.legend h3 { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.legend ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.legend li { display: flex; gap: 10px; align-items: center; }
+.sw { flex: none; width: 22px; height: 16px; border-radius: 4px; border: 2px solid var(--cap-edge); background: var(--cap); }
+.anat { display: flex; gap: 14px; align-items: center; }
+.anat svg { flex: none; width: 74px; height: 74px; }
+footer { color: var(--ink-faint); font-size: 13px; }
+@media (prefers-reduced-motion: no-preference) { .key rect.cap { transition: stroke .12s, fill .12s; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Go60 Keymap</h1>
+      <p class="sub">Moonlander AutoShift layout, as built from <code style="font-family:var(--mono);font-size:13px">examples/use_config/go60/keyboard.toml</code></p>
+    </div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+  </header>
+
+  <div class="plate"><svg class="board" id="board" viewBox="-20 -30 1790 700" role="img" aria-label="Go60 key layout"></svg></div>
+
+  <div class="below">
+    <section class="detail" id="detail" aria-live="polite"></section>
+    <aside class="legend">
+      <div class="anat">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <rect x="4" y="4" width="92" height="92" rx="12" fill="var(--cap)" stroke="var(--cap-edge)" stroke-width="2"/>
+          <text x="50" y="44" text-anchor="middle" dominant-baseline="central" font-size="30" font-family="var(--sans)" fill="var(--ink)">A</text>
+          <text x="50" y="80" text-anchor="middle" dominant-baseline="central" font-size="14" font-family="var(--sans)" fill="var(--ink-soft)">hold</text>
+          <text x="88" y="18" text-anchor="end" dominant-baseline="central" font-size="12" font-family="var(--sans)" fill="var(--ink-soft)">2×</text>
+        </svg>
+        <span>Tap in the middle, hold at the bottom, double-tap in the top corner. Select a key for details.</span>
+      </div>
+      <ul>
+        <li><span class="sw" style="background:var(--l1-soft);border-color:var(--l1)"></span>Hold for Symbols</li>
+        <li><span class="sw" style="background:var(--l2-soft);border-color:var(--l2)"></span>Hold for Magic</li>
+        <li><span class="sw" style="background:var(--danger-soft);border-color:var(--danger)"></span>Resets, bootloader, or clears pairings</li>
+        <li><span class="sw" style="background:transparent;border-style:dashed;border-color:var(--ink-faint)"></span>Transparent: falls through to Base</li>
+      </ul>
+    </aside>
+  </div>
+
+  <footer>Key positions from MoErgo's <code style="font-family:var(--mono)">go60-layouts.dtsi</code>. The hidden output-toggle position (4,0) has no physical key and isn't shown.</footer>
+</div>
+
+<script>
+const DATA = {"keys": [{"x": 0, "y": 50, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(0,0)", "side": "left", "thumb": false}, {"x": 100, "y": 50, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(0,1)", "side": "left", "thumb": false}, {"x": 200, "y": 0, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(0,2)", "side": "left", "thumb": false}, {"x": 300, "y": 0, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(0,3)", "side": "left", "thumb": false}, {"x": 400, "y": 0, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(0,4)", "side": "left", "thumb": false}, {"x": 500, "y": 0, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(0,5)", "side": "left", "thumb": false}, {"x": 1150, "y": 0, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(0,8)", "side": "right", "thumb": false}, {"x": 1250, "y": 0, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(0,9)", "side": "right", "thumb": false}, {"x": 1350, "y": 0, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(0,10)", "side": "right", "thumb": false}, {"x": 1450, "y": 0, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(0,11)", "side": "right", "thumb": false}, {"x": 1550, "y": 50, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(0,12)", "side": "right", "thumb": false}, {"x": 1650, "y": 50, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(0,13)", "side": "right", "thumb": false}, {"x": 0, "y": 150, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(1,0)", "side": "left", "thumb": false}, {"x": 100, "y": 150, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(1,1)", "side": "left", "thumb": false}, {"x": 200, "y": 100, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(1,2)", "side": "left", "thumb": false}, {"x": 300, "y": 100, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(1,3)", "side": "left", "thumb": false}, {"x": 400, "y": 100, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(1,4)", "side": "left", "thumb": false}, {"x": 500, "y": 100, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(1,5)", "side": "left", "thumb": false}, {"x": 1150, "y": 100, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(1,8)", "side": "right", "thumb": false}, {"x": 1250, "y": 100, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(1,9)", "side": "right", "thumb": false}, {"x": 1350, "y": 100, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(1,10)", "side": "right", "thumb": false}, {"x": 1450, "y": 100, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(1,11)", "side": "right", "thumb": false}, {"x": 1550, "y": 150, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(1,12)", "side": "right", "thumb": false}, {"x": 1650, "y": 150, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(1,13)", "side": "right", "thumb": false}, {"x": 0, "y": 250, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(2,0)", "side": "left", "thumb": false}, {"x": 100, "y": 250, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(2,1)", "side": "left", "thumb": false}, {"x": 200, "y": 200, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(2,2)", "side": "left", "thumb": false}, {"x": 300, "y": 200, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(2,3)", "side": "left", "thumb": false}, {"x": 400, "y": 200, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(2,4)", "side": "left", "thumb": false}, {"x": 500, "y": 200, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(2,5)", "side": "left", "thumb": false}, {"x": 1150, "y": 200, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(2,8)", "side": "right", "thumb": false}, {"x": 1250, "y": 200, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(2,9)", "side": "right", "thumb": false}, {"x": 1350, "y": 200, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(2,10)", "side": "right", "thumb": false}, {"x": 1450, "y": 200, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(2,11)", "side": "right", "thumb": false}, {"x": 1550, "y": 250, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(2,12)", "side": "right", "thumb": false}, {"x": 1650, "y": 250, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(2,13)", "side": "right", "thumb": false}, {"x": 0, "y": 350, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(3,0)", "side": "left", "thumb": false}, {"x": 100, "y": 350, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(3,1)", "side": "left", "thumb": false}, {"x": 200, "y": 300, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(3,2)", "side": "left", "thumb": false}, {"x": 300, "y": 300, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(3,3)", "side": "left", "thumb": false}, {"x": 400, "y": 300, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(3,4)", "side": "left", "thumb": false}, {"x": 500, "y": 300, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(3,5)", "side": "left", "thumb": false}, {"x": 1150, "y": 300, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(3,8)", "side": "right", "thumb": false}, {"x": 1250, "y": 300, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(3,9)", "side": "right", "thumb": false}, {"x": 1350, "y": 300, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(3,10)", "side": "right", "thumb": false}, {"x": 1450, "y": 300, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(3,11)", "side": "right", "thumb": false}, {"x": 1550, "y": 350, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(3,12)", "side": "right", "thumb": false}, {"x": 1650, "y": 350, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(3,13)", "side": "right", "thumb": false}, {"x": 200, "y": 400, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(4,2)", "side": "left", "thumb": false}, {"x": 300, "y": 400, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(4,3)", "side": "left", "thumb": false}, {"x": 400, "y": 400, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(4,4)", "side": "left", "thumb": false}, {"x": 1250, "y": 400, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(4,9)", "side": "right", "thumb": false}, {"x": 1350, "y": 400, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(4,10)", "side": "right", "thumb": false}, {"x": 1450, "y": 400, "rot": 0.0, "rx": 0, "ry": 0, "pos": "(4,11)", "side": "right", "thumb": false}, {"x": 520, "y": 410, "rot": 12.5, "rx": 520, "ry": 410, "pos": "(0,6)", "side": "left", "thumb": true}, {"x": 640, "y": 440, "rot": 25.0, "rx": 640, "ry": 440, "pos": "(1,6)", "side": "left", "thumb": true}, {"x": 750, "y": 495, "rot": 37.0, "rx": 750, "ry": 495, "pos": "(2,6)", "side": "left", "thumb": true}, {"x": 915, "y": 550, "rot": -37.0, "rx": 915, "ry": 550, "pos": "(2,7)", "side": "right", "thumb": true}, {"x": 1015, "y": 480, "rot": -25.0, "rx": 1015, "ry": 480, "pos": "(1,7)", "side": "right", "thumb": true}, {"x": 1130, "y": 430, "rot": -12.5, "rx": 1130, "ry": 430, "pos": "(0,7)", "side": "right", "thumb": true}], "layers": [{"name": "Base", "keys": [{"code": "Escape", "tap": "Esc", "kind": "mod", "desc": "Escape."}, {"code": "TH(Kc1, Macro(0))", "tap": "1", "hold": "!", "kind": "alpha", "desc": "Tap for 1, hold for ! (autoshift)."}, {"code": "TH(Kc2, Macro(1))", "tap": "2", "hold": "@", "kind": "alpha", "desc": "Tap for 2, hold for @ (autoshift)."}, {"code": "TH(Kc3, Macro(2))", "tap": "3", "hold": "#", "kind": "alpha", "desc": "Tap for 3, hold for # (autoshift)."}, {"code": "TH(Kc4, Macro(3))", "tap": "4", "hold": "$", "kind": "alpha", "desc": "Tap for 4, hold for $ (autoshift)."}, {"code": "TH(Kc5, Macro(4))", "tap": "5", "hold": "%", "kind": "alpha", "desc": "Tap for 5, hold for % (autoshift)."}, {"code": "TH(Kc6, Macro(5))", "tap": "6", "hold": "^", "kind": "alpha", "desc": "Tap for 6, hold for ^ (autoshift)."}, {"code": "TH(Kc7, Macro(6))", "tap": "7", "hold": "&", "kind": "alpha", "desc": "Tap for 7, hold for & (autoshift)."}, {"code": "TH(Kc8, Macro(7))", "tap": "8", "hold": "*", "kind": "alpha", "desc": "Tap for 8, hold for * (autoshift)."}, {"code": "TH(Kc9, Macro(8))", "tap": "9", "hold": "(", "kind": "alpha", "desc": "Tap for 9, hold for ( (autoshift)."}, {"code": "TH(Kc0, Macro(9))", "tap": "0", "hold": ")", "kind": "alpha", "desc": "Tap for 0, hold for ) (autoshift)."}, {"code": "Backspace", "tap": "⌫", "kind": "mod", "desc": "Backspace."}, {"code": "Tab", "tap": "Tab", "kind": "mod", "desc": "Tab."}, {"code": "TH(Q, Macro(10))", "tap": "Q", "hold": "⇧", "kind": "alpha", "desc": "Tap for q, hold for Q (autoshift)."}, {"code": "TH(W, Macro(11))", "tap": "W", "hold": "⇧", "kind": "alpha", "desc": "Tap for w, hold for W (autoshift)."}, {"code": "TH(E, Macro(12))", "tap": "E", "hold": "⇧", "kind": "alpha", "desc": "Tap for e, hold for E (autoshift)."}, {"code": "TH(R, Macro(13))", "tap": "R", "hold": "⇧", "kind": "alpha", "desc": "Tap for r, hold for R (autoshift)."}, {"code": "TH(T, Macro(14))", "tap": "T", "hold": "⇧", "kind": "alpha", "desc": "Tap for t, hold for T (autoshift)."}, {"code": "TH(Y, Macro(15))", "tap": "Y", "hold": "⇧", "kind": "alpha", "desc": "Tap for y, hold for Y (autoshift)."}, {"code": "TH(U, Macro(16))", "tap": "U", "hold": "⇧", "kind": "alpha", "desc": "Tap for u, hold for U (autoshift)."}, {"code": "TH(I, Macro(17))", "tap": "I", "hold": "⇧", "kind": "alpha", "desc": "Tap for i, hold for I (autoshift)."}, {"code": "TH(O, Macro(18))", "tap": "O", "hold": "⇧", "kind": "alpha", "desc": "Tap for o, hold for O (autoshift)."}, {"code": "TH(P, Macro(19))", "tap": "P", "hold": "⇧", "kind": "alpha", "desc": "Tap for p, hold for P (autoshift)."}, {"code": "TH(Equal, Macro(20))", "tap": "=", "hold": "+", "kind": "alpha", "desc": "Tap for =, hold for + (autoshift)."}, {"code": "MO(1)", "tap": "Symbols", "kind": "layer1", "desc": "Hold for the Symbols layer."}, {"code": "TH(A, Macro(21))", "tap": "A", "hold": "⇧", "kind": "alpha", "desc": "Tap for a, hold for A (autoshift)."}, {"code": "TH(S, Macro(22))", "tap": "S", "hold": "⇧", "kind": "alpha", "desc": "Tap for s, hold for S (autoshift)."}, {"code": "TH(D, Macro(23))", "tap": "D", "hold": "⇧", "kind": "alpha", "desc": "Tap for d, hold for D (autoshift)."}, {"code": "TH(F, Macro(24))", "tap": "F", "hold": "⇧", "kind": "alpha", "desc": "Tap for f, hold for F (autoshift)."}, {"code": "TH(G, Macro(25))", "tap": "G", "hold": "⇧", "kind": "alpha", "desc": "Tap for g, hold for G (autoshift)."}, {"code": "TH(H, Macro(26))", "tap": "H", "hold": "⇧", "kind": "alpha", "desc": "Tap for h, hold for H (autoshift)."}, {"code": "TH(J, Macro(27))", "tap": "J", "hold": "⇧", "kind": "alpha", "desc": "Tap for j, hold for J (autoshift)."}, {"code": "TH(K, Macro(28))", "tap": "K", "hold": "⇧", "kind": "alpha", "desc": "Tap for k, hold for K (autoshift)."}, {"code": "TH(L, Macro(29))", "tap": "L", "hold": "⇧", "kind": "alpha", "desc": "Tap for l, hold for L (autoshift)."}, {"code": "TH(Semicolon, Macro(30))", "tap": ";", "hold": ":", "kind": "alpha", "desc": "Tap for ;, hold for : (autoshift)."}, {"code": "TH(Backslash, Macro(31))", "tap": "\\", "hold": "|", "kind": "alpha", "desc": "Tap for \\, hold for | (autoshift)."}, {"code": "LShift", "tap": "⇧", "kind": "mod", "desc": "LShift."}, {"code": "TH(Z, Macro(32))", "tap": "Z", "hold": "⇧", "kind": "alpha", "desc": "Tap for z, hold for Z (autoshift)."}, {"code": "TH(X, Macro(33))", "tap": "X", "hold": "⇧", "kind": "alpha", "desc": "Tap for x, hold for X (autoshift)."}, {"code": "TH(C, Macro(34))", "tap": "C", "hold": "⇧", "kind": "alpha", "desc": "Tap for c, hold for C (autoshift)."}, {"code": "TH(V, Macro(35))", "tap": "V", "hold": "⇧", "kind": "alpha", "desc": "Tap for v, hold for V (autoshift)."}, {"code": "TH(Grave, Macro(36))", "tap": "`", "hold": "~", "kind": "alpha", "desc": "Tap for `, hold for ~ (autoshift)."}, {"code": "TH(B, Macro(37))", "tap": "B", "hold": "⇧", "kind": "alpha", "desc": "Tap for b, hold for B (autoshift)."}, {"code": "TH(N, Macro(38))", "tap": "N", "hold": "⇧", "kind": "alpha", "desc": "Tap for n, hold for N (autoshift)."}, {"code": "TH(M, Macro(39))", "tap": "M", "hold": "⇧", "kind": "alpha", "desc": "Tap for m, hold for M (autoshift)."}, {"code": "TH(Comma, Macro(40))", "tap": ",", "hold": "<", "kind": "alpha", "desc": "Tap for ,, hold for < (autoshift)."}, {"code": "TH(Dot, Macro(41))", "tap": ".", "hold": ">", "kind": "alpha", "desc": "Tap for ., hold for > (autoshift)."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "Left", "tap": "←", "kind": "nav", "desc": "Left."}, {"code": "Right", "tap": "→", "kind": "nav", "desc": "Right."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "TH(LeftBracket, Macro(42))", "tap": "[", "hold": "{", "kind": "alpha", "desc": "Tap for [, hold for { (autoshift)."}, {"code": "TH(RightBracket, Macro(43))", "tap": "]", "hold": "}", "kind": "alpha", "desc": "Tap for ], hold for } (autoshift)."}, {"code": "MO(1)", "tap": "Symbols", "kind": "layer1", "desc": "Hold for the Symbols layer."}, {"code": "MO(2)", "tap": "Magic", "kind": "layer2", "desc": "Hold for the Magic layer."}, {"code": "User21", "tap": "Status", "kind": "system", "desc": "Shows battery and Bluetooth status on the left half’s LEDs for 10 seconds."}, {"code": "Backspace", "tap": "⌫", "kind": "mod", "desc": "Backspace."}, {"code": "TH(Enter, Macro(44))", "tap": "⏎", "hold": "⇧⏎", "kind": "mod", "desc": "Tap for ⏎, hold for ⇧⏎ (autoshift)."}, {"code": "Space", "tap": "Space", "kind": "mod", "desc": "Space."}]}, {"name": "Symbols", "keys": [{"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "F1", "tap": "F1", "kind": "fn", "desc": "F1."}, {"code": "F2", "tap": "F2", "kind": "fn", "desc": "F2."}, {"code": "F3", "tap": "F3", "kind": "fn", "desc": "F3."}, {"code": "F4", "tap": "F4", "kind": "fn", "desc": "F4."}, {"code": "F5", "tap": "F5", "kind": "fn", "desc": "F5."}, {"code": "F6", "tap": "F6", "kind": "fn", "desc": "F6."}, {"code": "F7", "tap": "F7", "kind": "fn", "desc": "F7."}, {"code": "F8", "tap": "F8", "kind": "fn", "desc": "F8."}, {"code": "F9", "tap": "F9", "kind": "fn", "desc": "F9."}, {"code": "F10", "tap": "F10", "kind": "fn", "desc": "F10."}, {"code": "F11", "tap": "F11", "kind": "fn", "desc": "F11."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "TD(4)", "dbl": "Lock", "kind": "system", "desc": "Double-tap to lock the Mac (⌃⌘Q)."}, {"code": "WM(Left, LCtrl)", "tap": "⌃←", "kind": "nav", "desc": "Moves one macOS space left."}, {"code": "WM(Up, LCtrl)", "tap": "⌃↑", "kind": "nav", "desc": "Opens Mission Control."}, {"code": "WM(Right, LCtrl)", "tap": "⌃→", "kind": "nav", "desc": "Moves one macOS space right."}, {"code": "PageUp", "tap": "PgUp", "kind": "nav", "desc": "PageUp."}, {"code": "WM(Quote, LShift)", "tap": "\"", "kind": "alpha", "desc": "Types \"."}, {"code": "Quote", "tap": "'", "kind": "alpha", "desc": "Quote."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "F12", "tap": "F12", "kind": "fn", "desc": "F12."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "TD(0)", "tap": "⌃", "hold": "Ctrl", "dbl": "latch 10s", "kind": "mod", "desc": "One-shot Ctrl: applies to the next key. Double-tap to latch it on. The latch times out after 10 seconds, or double-tap again to release it sooner."}, {"code": "TD(1)", "tap": "⌥", "hold": "Option", "dbl": "latch 10s", "kind": "mod", "desc": "One-shot Option: applies to the next key. Double-tap to latch it on. The latch times out after 10 seconds, or double-tap again to release it sooner."}, {"code": "TD(2)", "tap": "⌘", "hold": "Cmd", "dbl": "latch 10s", "kind": "mod", "desc": "One-shot Cmd: applies to the next key. Double-tap to latch it on. The latch times out after 10 seconds, or double-tap again to release it sooner."}, {"code": "TD(3)", "tap": "⇧", "hold": "Shift", "dbl": "latch 10s", "kind": "mod", "desc": "One-shot Shift: applies to the next key. Double-tap to latch it on. The latch times out after 10 seconds, or double-tap again to release it sooner."}, {"code": "PageDown", "tap": "PgDn", "kind": "nav", "desc": "PageDown."}, {"code": "Slash", "tap": "/", "kind": "alpha", "desc": "Slash."}, {"code": "WM(Slash, LShift)", "tap": "?", "kind": "alpha", "desc": "Types ?."}, {"code": "TD(2)", "tap": "⌘", "hold": "Cmd", "dbl": "latch 10s", "kind": "mod", "desc": "One-shot Cmd: applies to the next key. Double-tap to latch it on. The latch times out after 10 seconds, or double-tap again to release it sooner."}, {"code": "TD(1)", "tap": "⌥", "hold": "Option", "dbl": "latch 10s", "kind": "mod", "desc": "One-shot Option: applies to the next key. Double-tap to latch it on. The latch times out after 10 seconds, or double-tap again to release it sooner."}, {"code": "TD(0)", "tap": "⌃", "hold": "Ctrl", "dbl": "latch 10s", "kind": "mod", "desc": "One-shot Ctrl: applies to the next key. Double-tap to latch it on. The latch times out after 10 seconds, or double-tap again to release it sooner."}, {"code": "Home", "tap": "Home", "kind": "nav", "desc": "Home."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "WM(Z, LGui)", "tap": "⌘Z", "kind": "mod", "desc": "Sends Cmd+Z."}, {"code": "WM(X, LGui)", "tap": "⌘X", "kind": "mod", "desc": "Sends Cmd+X."}, {"code": "WM(C, LGui)", "tap": "⌘C", "kind": "mod", "desc": "Sends Cmd+C."}, {"code": "WM(V, LGui)", "tap": "⌘V", "kind": "mod", "desc": "Sends Cmd+V."}, {"code": "WM(Grave, LShift)", "tap": "~", "kind": "alpha", "desc": "Types ~."}, {"code": "WM(Minus, LShift)", "tap": "_", "kind": "alpha", "desc": "Types _."}, {"code": "Minus", "tap": "-", "kind": "alpha", "desc": "Minus."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "Equal", "tap": "=", "kind": "alpha", "desc": "Equal."}, {"code": "End", "tap": "End", "kind": "nav", "desc": "End."}, {"code": "AudioVolDown", "tap": "Vol −", "kind": "media", "desc": "Vol −."}, {"code": "AudioVolUp", "tap": "Vol +", "kind": "media", "desc": "Vol +."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "MO(2)", "tap": "Magic", "kind": "layer2", "desc": "Hold for the Magic layer."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "MouseBtn1", "tap": "Click", "kind": "mod", "desc": "MouseBtn1."}, {"code": "_", "kind": "trans", "desc": "Transparent: uses the key from the layer below."}, {"code": "Enter", "tap": "⏎", "kind": "mod", "desc": "Enter."}]}, {"name": "Magic", "keys": [{"code": "User6", "tap": "Clear BT", "kind": "danger", "desc": "Clears the pairing for the active Bluetooth profile."}, {"code": "BrightnessDown", "tap": "Bright −", "kind": "media", "desc": "Bright −."}, {"code": "BrightnessUp", "tap": "Bright +", "kind": "media", "desc": "Bright +."}, {"code": "MediaPrevTrack", "tap": "⏮", "kind": "media", "desc": "⏮."}, {"code": "MediaNextTrack", "tap": "⏭", "kind": "media", "desc": "⏭."}, {"code": "MediaPlayPause", "tap": "⏯", "kind": "media", "desc": "⏯."}, {"code": "AudioMute", "tap": "Mute", "kind": "media", "desc": "Mute."}, {"code": "AudioVolDown", "tap": "Vol −", "kind": "media", "desc": "Vol −."}, {"code": "AudioVolUp", "tap": "Vol +", "kind": "media", "desc": "Vol +."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "Macro(45)", "tap": "Clear all BT", "kind": "danger", "desc": "Clears every Bluetooth pairing and ends on profile 1."}, {"code": "Bootloader", "tap": "Boot", "kind": "danger", "desc": "Restarts this half into the UF2 bootloader."}, {"code": "RgbSpi", "tap": "Speed +", "kind": "rgb", "desc": "Underglow: Speed +."}, {"code": "RgbSai", "tap": "Sat +", "kind": "rgb", "desc": "Underglow: Sat +."}, {"code": "RgbHui", "tap": "Hue +", "kind": "rgb", "desc": "Underglow: Hue +."}, {"code": "RgbVai", "tap": "Glow +", "kind": "rgb", "desc": "Underglow: Glow +."}, {"code": "RgbTog", "tap": "Glow on/off", "kind": "rgb", "desc": "Underglow: Glow on/off."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "Up", "tap": "↑", "kind": "nav", "desc": "Up."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "Reboot", "tap": "Reset", "kind": "danger", "desc": "Restarts this half."}, {"code": "RgbSpd", "tap": "Speed −", "kind": "rgb", "desc": "Underglow: Speed −."}, {"code": "RgbSad", "tap": "Sat −", "kind": "rgb", "desc": "Underglow: Sat −."}, {"code": "RgbHud", "tap": "Hue −", "kind": "rgb", "desc": "Underglow: Hue −."}, {"code": "RgbVad", "tap": "Glow −", "kind": "rgb", "desc": "Underglow: Glow −."}, {"code": "RgbModeForward", "tap": "Effect", "kind": "rgb", "desc": "Underglow: Effect."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "Left", "tap": "←", "kind": "nav", "desc": "Left."}, {"code": "Down", "tap": "↓", "kind": "nav", "desc": "Down."}, {"code": "Right", "tap": "→", "kind": "nav", "desc": "Right."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "User0", "tap": "BT 1", "kind": "bt", "desc": "Selects Bluetooth profile 1 and switches output to Bluetooth."}, {"code": "User1", "tap": "BT 2", "kind": "bt", "desc": "Selects Bluetooth profile 2 and switches output to Bluetooth."}, {"code": "User2", "tap": "BT 3", "kind": "bt", "desc": "Selects Bluetooth profile 3 and switches output to Bluetooth."}, {"code": "User3", "tap": "BT 4", "kind": "bt", "desc": "Selects Bluetooth profile 4 and switches output to Bluetooth."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "TO(0)", "tap": "→ Base", "kind": "layer0", "desc": "Switches to the Base layer and stays there."}, {"code": "User20", "tap": "USB", "kind": "bt", "desc": "Switches output to USB."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}, {"code": "No", "kind": "none", "desc": "Does nothing."}]}]};
+const NS = 'http://www.w3.org/2000/svg';
+const board = document.getElementById('board');
+const tabs = document.getElementById('tabs');
+const detail = document.getElementById('detail');
+const LAYER_COLOR = ['var(--l0)', 'var(--l1)', 'var(--l2)'];
+let layer = 0, sel = 55;
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+DATA.layers.forEach((l, i) => {
+  const b = document.createElement('button');
+  b.id = 'tab-' + i;
+  b.setAttribute('role', 'tab');
+  b.innerHTML = `<span class="dot" style="background:${LAYER_COLOR[i]}"></span>${l.name}<span class="n">L${i}</span>`;
+  b.onclick = () => { layer = i; render(); };
+  tabs.appendChild(b);
+});
+
+function mainSize(label) {
+  if (label.length <= 2) return 32;
+  if (label.length <= 4) return 24;
+  return 19;
+}
+
+function render() {
+  [...tabs.children].forEach((b, i) => b.setAttribute('aria-selected', i === layer));
+  board.replaceChildren();
+  el('text', { x: 300, y: -8, class: 'half-label' }, board).textContent = 'LEFT';
+  el('text', { x: 1450, y: -8, class: 'half-label' }, board).textContent = 'RIGHT';
+  const keys = DATA.layers[layer].keys;
+  DATA.keys.forEach((p, i) => {
+    let k = keys[i];
+    const ghost = k.kind === 'trans' ? DATA.layers[0].keys[i] : null;
+    const g = el('g', {
+      class: 'key k-' + k.kind + (i === sel ? ' sel' : ''), tabindex: 0, role: 'button',
+      transform: `rotate(${p.rot} ${p.rx} ${p.ry}) translate(${p.x} ${p.y})`,
+      'aria-label': `${p.pos}: ${k.desc}`,
+    }, board);
+    el('rect', { class: 'cap', x: 5, y: 5, width: 90, height: 90, rx: 12 }, g);
+    const show = ghost || k;
+    const label = show.tap || '';
+    const lines = label.length > 6 && label.includes(' ') ? [label.slice(0, label.lastIndexOf(' ')), label.slice(label.lastIndexOf(' ') + 1)] : [label];
+    const cy = show.hold ? 42 : 50;
+    lines.forEach((ln, j) => {
+      const fs = lines.length > 1 ? 17 : mainSize(ln);
+      const t = el('text', { class: 'main', x: 50, y: cy + (j - (lines.length - 1) / 2) * 20, 'font-size': fs }, g);
+      t.textContent = ln;
+    });
+    if (show.hold) el('text', { class: 'hold', x: 50, y: 78 }, g).textContent = show.hold;
+    if (show.dbl) el('text', { class: 'dbl', x: 87, y: 20 }, g).textContent = '2× ' + show.dbl;
+    g.onclick = () => { sel = i; render(); };
+    g.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sel = i; render(); board.children[i + 2].focus(); } };
+  });
+  const k = keys[sel], p = DATA.keys[sel];
+  const where = p.thumb ? `${p.side} thumb ${p.side === 'left' ? sel - 53 : 60 - sel}` : `${p.side} half`;
+  let desc = k.desc;
+  if (k.kind === 'trans') desc += ' On Base: ' + DATA.layers[0].keys[sel].desc;
+  detail.innerHTML = `<div class="eyebrow">${DATA.layers[layer].name} · ${where} · matrix ${p.pos}</div>
+    <h2></h2><p></p><div><code></code></div>`;
+  detail.querySelector('h2').textContent = k.kind === 'trans' ? 'Transparent' : k.kind === 'none' ? 'Unassigned' : (k.tap || (k.dbl ? '2× ' + k.dbl : ''));
+  detail.querySelector('p').textContent = desc;
+  detail.querySelector('code').textContent = k.code;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('.key')) return;
+  const n = Number(e.key) - 1;
+  if (n >= 0 && n < DATA.layers.length) { layer = n; render(); }
+});
+render();
+</script>
+</body>
+</html>

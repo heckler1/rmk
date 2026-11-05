@@ -31,6 +31,14 @@ This writes `go60_lh.uf2` and `go60_rh.uf2`. Use these files, not the output of 
 
 On this firmware, the Bootloader key is the outer key on the second row of the Magic layer, on each half. The Magic layer is on the second left thumb key.
 
+## Keymap
+
+Open `keymap/keymap.html` in a browser to see each layer on the Go60's key positions. After you change `keyboard.toml`, regenerate the page from this directory:
+
+```bash
+python3 keymap/keymap.py
+```
+
 ## Go back to ZMK
 
 Enter bootloader mode the same way and copy your MoErgo UF2 to each half. This firmware leaves the bootloader, SoftDevice, and `UICR.REGOUT0` untouched.
